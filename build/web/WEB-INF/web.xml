@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="4.0" xmlns="http://xmlns.jcp.org/xml/ns/javaee" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee 
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd">
+    
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+    
+    <welcome-file-list>
+        <welcome-file>login.jsp</welcome-file>
+    </welcome-file-list>
+    
+    <!-- Filtro de Autenticación (COMENTADO TEMPORALMENTE) -->
+    <!--
+    <filter>
+        <filter-name>AuthenticationFilter</filter-name>
+        <filter-class>Filtros.AuthenticationFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>AuthenticationFilter</filter-name>
+        <url-pattern>/dashboard.jsp</url-pattern>
+        <url-pattern>/ControladorEmpleado</url-pattern>
+        <url-pattern>/ControladorCliente</url-pattern>
+        <url-pattern>/ControladorProducto</url-pattern>
+        <url-pattern>/ControladorCategoria</url-pattern>
+    </filter-mapping>
+    -->
+</web-app>
