@@ -19,31 +19,6 @@
 CREATE DATABASE IF NOT EXISTS `bdsistienda_geca` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
 USE `bdsistienda_geca`;
 
--- Volcando estructura para tabla bdsistienda_geca.tbboleta
-CREATE TABLE IF NOT EXISTS `tbboleta` (
-  `idboleta` int(11) NOT NULL AUTO_INCREMENT,
-  `numero_boleta` varchar(20) NOT NULL,
-  `fecha_emision` date NOT NULL,
-  `hora_emision` time NOT NULL,
-  `subtotal` decimal(10,2) NOT NULL,
-  `igv` decimal(10,2) NOT NULL,
-  `total` decimal(10,2) NOT NULL,
-  `estado_boleta` varchar(20) DEFAULT 'ACTIVA',
-  `idcliente` int(11) DEFAULT NULL,
-  `idempleado` int(11) DEFAULT NULL,
-  `estado` int(11) DEFAULT 1,
-  `fecha_creacion` datetime DEFAULT current_timestamp(),
-  `fecha_actualizacion` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`idboleta`),
-  UNIQUE KEY `numero_boleta` (`numero_boleta`),
-  KEY `idcliente` (`idcliente`),
-  KEY `idempleado` (`idempleado`),
-  CONSTRAINT `tbboleta_ibfk_1` FOREIGN KEY (`idcliente`) REFERENCES `tbcliente` (`idcliente`),
-  CONSTRAINT `tbboleta_ibfk_2` FOREIGN KEY (`idempleado`) REFERENCES `tbempleado` (`idempleado`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Volcando datos para la tabla bdsistienda_geca.tbboleta: ~0 rows (aproximadamente)
-
 -- Volcando estructura para tabla bdsistienda_geca.tbcargo
 CREATE TABLE IF NOT EXISTS `tbcargo` (
   `idcargo` int(11) NOT NULL AUTO_INCREMENT,
@@ -100,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `tbcliente` (
 
 -- Volcando datos para la tabla bdsistienda_geca.tbcliente: ~4 rows (aproximadamente)
 INSERT INTO `tbcliente` (`idcliente`, `nombre`, `apellido`, `dni`, `telefono`, `email`, `direccion`, `fecha_registro`, `estado`, `fecha_creacion`, `fecha_actualizacion`) VALUES
-	(1, 'Ana', 'Rodríguez', '44332211', '987111222', 'ana@cliente.com', 'Av. Los Olivos 123', '2025-10-01', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57'),
+	(1, 'Ana', 'Rodríguez', '44332211', '987111222', 'ana@cliente.com', 'Av. Los Olivos 123', '2025-10-01', 1, '2025-10-18 00:25:57', '2025-10-24 15:16:09'),
 	(2, 'Luis', 'Martínez', '55667788', '987333444', 'luis@cliente.com', 'Jr. Las Flores 456', '2025-10-01', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57'),
 	(3, 'Sofía', 'García', '99887766', '987555666', 'sofia@cliente.com', 'Calle Primavera 789', '2025-10-01', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57'),
 	(4, 'Pedro', 'Hernández', '22334455', '987777888', 'pedro@cliente.com', 'Av. Siempre Viva 321', '2025-10-01', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57');
@@ -130,25 +105,6 @@ INSERT INTO `tbcolor` (`idcolor`, `nombrecolor`, `codigo_hex`, `descripcion`, `e
 	(8, 'Verde', '#008000', 'Color verde', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57'),
 	(9, 'Amarillo', '#FFFF00', 'Color amarillo', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57'),
 	(10, 'Rosa', '#FFC0CB', 'Color rosa', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57');
-
--- Volcando estructura para tabla bdsistienda_geca.tbdetalle
-CREATE TABLE IF NOT EXISTS `tbdetalle` (
-  `iddetalle` int(11) NOT NULL AUTO_INCREMENT,
-  `idboleta` int(11) DEFAULT NULL,
-  `idproducto` int(11) DEFAULT NULL,
-  `cantidad` int(11) NOT NULL,
-  `precio_unitario` decimal(10,2) NOT NULL,
-  `importe` decimal(10,2) NOT NULL,
-  `estado` int(11) DEFAULT 1,
-  `fecha_creacion` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`iddetalle`),
-  KEY `idboleta` (`idboleta`),
-  KEY `idproducto` (`idproducto`),
-  CONSTRAINT `tbdetalle_ibfk_1` FOREIGN KEY (`idboleta`) REFERENCES `tbboleta` (`idboleta`),
-  CONSTRAINT `tbdetalle_ibfk_2` FOREIGN KEY (`idproducto`) REFERENCES `tbproducto` (`idproducto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Volcando datos para la tabla bdsistienda_geca.tbdetalle: ~0 rows (aproximadamente)
 
 -- Volcando estructura para tabla bdsistienda_geca.tbempleado
 CREATE TABLE IF NOT EXISTS `tbempleado` (
@@ -255,9 +211,12 @@ CREATE TABLE IF NOT EXISTS `tbproducto` (
   CONSTRAINT `fk_producto_categoria` FOREIGN KEY (`idcategoria`) REFERENCES `tbcategoria` (`idcategoria`),
   CONSTRAINT `fk_producto_color` FOREIGN KEY (`idcolor`) REFERENCES `tbcolor` (`idcolor`),
   CONSTRAINT `fk_producto_modelo` FOREIGN KEY (`idmodelo`) REFERENCES `tbmodelo` (`idmodelo`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Volcando datos para la tabla bdsistienda_geca.tbproducto: ~0 rows (aproximadamente)
+-- Volcando datos para la tabla bdsistienda_geca.tbproducto: ~2 rows (aproximadamente)
+INSERT INTO `tbproducto` (`idproducto`, `idcategoria`, `idmodelo`, `idcolor`, `nombreproducto`, `descripcion`, `precio`, `stock`, `fecha_creacion`, `estado`, `fecha_actualizacion`) VALUES
+	(7, 2, 13, 7, 'Stevie', '123', 50.00, 3, '2025-10-24', 1, '2025-10-24 14:45:46'),
+	(8, 5, 4, 9, 'POLO AZURE', 'BUEN NEGOCIO', 30.00, 20, '2025-10-24', 1, '2025-10-24 15:18:42');
 
 -- Volcando estructura para tabla bdsistienda_geca.tbproducto_talla
 CREATE TABLE IF NOT EXISTS `tbproducto_talla` (

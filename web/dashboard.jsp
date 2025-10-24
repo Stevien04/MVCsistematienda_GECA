@@ -2,24 +2,22 @@
 <%@page import="ModeloDAO.clsEmpleadoDAO"%>
 <%@page import="Modelo.clsEmpleado"%>
 <%
-    // Verificar si hay sesión activa
+   
     Object empleadoObj = session.getAttribute("empleado");
     if (empleadoObj == null) {
         response.sendRedirect("login.jsp");
         return;
     }
     
-    // Obtener mensajes de la sesión
     String mensaje = (String) session.getAttribute("mensaje");
     String tipoMensaje = (String) session.getAttribute("tipoMensaje");
     
-    // Limpiar mensajes después de obtenerlos
+    
     if (mensaje != null) {
         session.removeAttribute("mensaje");
         session.removeAttribute("tipoMensaje");
     }
     
-    // Inicializar variables
     String nombreUsuario = "Usuario";
     String apellidoUsuario = "Sistema";
     String cargoUsuario = "Empleado";
@@ -29,7 +27,7 @@
     int totalProductos = 0;
     double ventasHoy = 0.0;
     
-    // Obtener datos del empleado logueado
+   
     if (empleadoObj instanceof clsEmpleado) {
         clsEmpleado empleadoLogueado = (clsEmpleado) empleadoObj;
         nombreUsuario = empleadoLogueado.getNombre() != null ? empleadoLogueado.getNombre() : "Usuario";
@@ -38,14 +36,12 @@
         iniciales = (nombreUsuario.charAt(0) + "" + apellidoUsuario.charAt(0)).toUpperCase();
         
         try {
-            // Obtener estadísticas de empleados
             clsEmpleadoDAO empleadoDAO = new clsEmpleadoDAO();
             totalEmpleados = empleadoDAO.obtenerTotalEmpleados();
             
-            // Para las otras estadísticas, usar valores por defecto por ahora
-            totalClientes = 15;  // Valor temporal
-            totalProductos = 28; // Valor temporal  
-            ventasHoy = 2150.75; // Valor temporal
+            totalClientes = 15;  
+            totalProductos = 28;  
+            ventasHoy = 2150.75; 
             
         } catch (Exception e) {
             // Usar valores por defecto si hay error
