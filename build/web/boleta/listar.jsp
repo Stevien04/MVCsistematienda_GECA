@@ -107,9 +107,6 @@
                         <a href="${pageContext.request.contextPath}/ControladorBoleta?accion=exportarPdf" class="btn btn-outline-danger">
                             <i class="fas fa-file-pdf me-2"></i>Boletas PDF
                         </a>
-                        <a href="${pageContext.request.contextPath}/ControladorBoleta?accion=nuevo" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Nueva Boleta
-                        </a>
                     </div>
                 </div>
 

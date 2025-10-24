@@ -53,6 +53,9 @@
             <a class="nav-link" href="<%= request.getContextPath() %>/ControladorTienda?accion=listarProductos">
                 <i class="fas fa-shop me-3"></i><span>Compras</span>
             </a>
+                <a class="nav-link" href="<%= request.getContextPath() %>/ControladorBoleta?accion=listar">
+                <i class="fas fa-receipt me-3"></i><span>Boletas</span>
+            </a>
              <a class="nav-link text-warning mt-4" href="<%= request.getContextPath() %>/ControladorEmpleado?accion=logout">
                 <i class="fas fa-sign-out-alt me-3"></i><span>Cerrar Sesi&oacute;n</span>
             </a>

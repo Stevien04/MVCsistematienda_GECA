@@ -10,4 +10,5 @@ public interface CRUDCliente {
     boolean agregar(clsCliente cliente);
     boolean actualizar(clsCliente cliente);
     boolean eliminar(int id);
+    boolean Registrarcliente(clsCliente cliente);
 }

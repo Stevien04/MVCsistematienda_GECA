@@ -40,12 +40,13 @@ CREATE TABLE IF NOT EXISTS `tbboleta` (
   KEY `fk_boleta_empleado` (`idempleado`),
   CONSTRAINT `fk_boleta_cliente` FOREIGN KEY (`idcliente`) REFERENCES `tbcliente` (`idcliente`),
   CONSTRAINT `fk_boleta_empleado` FOREIGN KEY (`idempleado`) REFERENCES `tbempleado` (`idempleado`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Volcando datos para la tabla bdsistienda_geca.tbboleta: ~2 rows (aproximadamente)
+-- Volcando datos para la tabla bdsistienda_geca.tbboleta: ~3 rows (aproximadamente)
 INSERT INTO `tbboleta` (`idboleta`, `numero_boleta`, `fecha_emision`, `hora_emision`, `subtotal`, `igv`, `total`, `estado_boleta`, `idcliente`, `idempleado`, `estado`, `fecha_creacion`, `fecha_actualizacion`) VALUES
 	(1, 'BOL-000001', '2025-10-24', '15:30:00', 42.37, 7.63, 50.00, 'ACTIVA', 1, 1, 1, '2025-10-24 15:30:00', '2025-10-24 15:30:00'),
-	(2, 'BOL-000002', '2025-10-24', '16:34:59', 25.42, 4.58, 30.00, 'ACTIVA', 1, 4, 1, '2025-10-24 16:35:00', '2025-10-24 16:35:00');
+	(2, 'BOL-000002', '2025-10-24', '16:34:59', 25.42, 4.58, 30.00, 'ANULADA', 1, 4, 0, '2025-10-24 16:35:00', '2025-10-24 17:23:59'),
+	(3, 'BOL-000003', '2025-10-24', '17:27:27', 25.42, 4.58, 30.00, 'ACTIVA', 1, 4, 1, '2025-10-24 17:27:27', '2025-10-24 17:27:27');
 
 -- Volcando estructura para tabla bdsistienda_geca.tbcargo
 CREATE TABLE IF NOT EXISTS `tbcargo` (
@@ -150,12 +151,13 @@ CREATE TABLE IF NOT EXISTS `tbdetalleboleta` (
   KEY `fk_detalle_producto` (`idproducto`),
   CONSTRAINT `fk_detalle_boleta` FOREIGN KEY (`idboleta`) REFERENCES `tbboleta` (`idboleta`) ON DELETE CASCADE,
   CONSTRAINT `fk_detalle_producto` FOREIGN KEY (`idproducto`) REFERENCES `tbproducto` (`idproducto`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Volcando datos para la tabla bdsistienda_geca.tbdetalleboleta: ~2 rows (aproximadamente)
 INSERT INTO `tbdetalleboleta` (`iddetalle`, `idboleta`, `idproducto`, `cantidad`, `precio_unitario`, `importe`, `estado`, `fecha_creacion`) VALUES
 	(1, 1, 7, 1, 50.00, 50.00, 1, '2025-10-24 15:30:00'),
-	(2, 2, 8, 1, 30.00, 30.00, 1, '2025-10-24 16:35:00');
+	(2, 2, 8, 1, 30.00, 30.00, 1, '2025-10-24 16:35:00'),
+	(3, 3, 8, 1, 30.00, 30.00, 1, '2025-10-24 17:27:27');
 
 -- Volcando estructura para tabla bdsistienda_geca.tbempleado
 CREATE TABLE IF NOT EXISTS `tbempleado` (
@@ -262,12 +264,13 @@ CREATE TABLE IF NOT EXISTS `tbproducto` (
   CONSTRAINT `fk_producto_categoria` FOREIGN KEY (`idcategoria`) REFERENCES `tbcategoria` (`idcategoria`),
   CONSTRAINT `fk_producto_color` FOREIGN KEY (`idcolor`) REFERENCES `tbcolor` (`idcolor`),
   CONSTRAINT `fk_producto_modelo` FOREIGN KEY (`idmodelo`) REFERENCES `tbmodelo` (`idmodelo`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Volcando datos para la tabla bdsistienda_geca.tbproducto: ~2 rows (aproximadamente)
+-- Volcando datos para la tabla bdsistienda_geca.tbproducto: ~3 rows (aproximadamente)
 INSERT INTO `tbproducto` (`idproducto`, `idcategoria`, `idmodelo`, `idcolor`, `nombreproducto`, `descripcion`, `precio`, `stock`, `fecha_creacion`, `estado`, `fecha_actualizacion`) VALUES
 	(7, 2, 13, 7, 'Stevie', '123', 50.00, 1, '2025-10-24', 1, '2025-10-24 15:36:08'),
-	(8, 5, 4, 9, 'POLO AZURE', 'BUEN NEGOCIO', 30.00, 18, '2025-10-24', 1, '2025-10-24 16:35:00');
+	(8, 5, 4, 9, 'POLO AZURE', 'BUEN NEGOCIO', 30.00, 17, '2025-10-24', 1, '2025-10-24 17:27:27'),
+	(9, 5, 1, 4, 'Adidas XD', 'EL MEJOR DE 2025', 50.00, 10, '2025-10-24', 1, '2025-10-24 17:12:24');
 
 -- Volcando estructura para tabla bdsistienda_geca.tbproducto_talla
 CREATE TABLE IF NOT EXISTS `tbproducto_talla` (
