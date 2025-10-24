@@ -227,6 +227,11 @@ public class clsClienteDAO implements CRUDCliente {
         return exito;
     }
     
+    @Override
+    public boolean Registrarcliente(clsCliente cliente) {
+        return agregarClienteCompleto(cliente);
+    }
+
     private void closeResources() {
         try {
             if (resultSet != null) resultSet.close();

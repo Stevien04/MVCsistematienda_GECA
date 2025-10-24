@@ -78,7 +78,6 @@ public class ControladorRegistroCliente extends HttpServlet {
         String direccion = request.getParameter("direccion");
         String usuario = request.getParameter("usuario");
         String password = request.getParameter("password");
-        String confirmarPassword = request.getParameter("confirmar_password");
         String fechaNacimientoStr = request.getParameter("fecha_nacimiento");
         
         // Validaciones básicas
@@ -97,9 +96,9 @@ public class ControladorRegistroCliente extends HttpServlet {
         }
         
         // Validar que las contraseñas coincidan
-        if (!password.equals(confirmarPassword)) {
+        if (password.length() < 6) { 
             HttpSession session = request.getSession();
-            session.setAttribute("mensaje", "Las contraseñas no coinciden");
+           session.setAttribute("mensaje", "La contraseña debe tener al menos 6 caracteres");
             session.setAttribute("tipoMensaje", "error");
             response.sendRedirect(request.getContextPath() + "/ControladorRegistroCliente?accion=mostrarFormulario");
             return;
@@ -147,7 +146,7 @@ public class ControladorRegistroCliente extends HttpServlet {
             }
         }
         
-        boolean exito = clienteDAO.agregarClienteCompleto(cliente);
+        boolean exito = clienteDAO.Registrarcliente(cliente);
         
         HttpSession session = request.getSession();
         if (exito) {
