@@ -18,18 +18,19 @@
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/tienda/exito.jsp</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsEmpleadoDAO.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Interfaces/CRUDDetalle.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Controlador/ControladorCargo.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Controlador/ControladorRegistroCliente.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsMarcaDAO.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Controlador/ControladorTienda.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Modelo/clsEmpleado.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/dashboard.jsp</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/includes/sidebar.jsp</file>
-            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/RegistraCliente.jsp</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsCargoDAO.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/index.html</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Interfaces/CRUDProducto.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Modelo/clsModelo.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Modelo/clsResumenVenta.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Controlador/ControladorProductoTalla.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsClienteDAO.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Controlador/ControladorCliente.java</file>
             <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/dashboard/Estadistica.jsp</file>
