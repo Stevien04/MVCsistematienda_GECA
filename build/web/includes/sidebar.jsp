@@ -32,28 +32,28 @@
         
         <!-- Navigation -->
         <div class="nav flex-column">
-            <a class="nav-link" href="dashboard.jsp">
+            <a class="nav-link" href="<%= request.getContextPath() %>/dashboard.jsp">
                 <i class="fas fa-tachometer-alt me-3"></i><span>Dashboard</span>
             </a>
             <a class="nav-link" href="<%= request.getContextPath() %>/dashboard/Estadistica.jsp">
                 <i class="fas fa-chart-bar me-3"></i><span>Estadísticas</span>
             </a>
-            <a class="nav-link" href="ControladorEmpleado?accion=listar">
+            <a class="nav-link" href="<%= request.getContextPath() %>/ControladorEmpleado?accion=listar">
                 <i class="fas fa-users me-3"></i><span>Empleados</span>
             </a>
-            <a class="nav-link" href="ControladorCliente?accion=listar">
+            <a class="nav-link" href="<%= request.getContextPath() %>/ControladorCliente?accion=listar">
                 <i class="fas fa-user-friends me-3"></i><span>Clientes</span>
             </a>
-            <a class="nav-link" href="ControladorProducto?accion=listar">
+            <a class="nav-link" href="<%= request.getContextPath() %>/ControladorProducto?accion=listar">
                 <i class="fas fa-box me-3"></i><span>Productos</span>
             </a>
-            <a class="nav-link" href="ControladorCategoria?accion=listar">
+            <a class="nav-link" href="<%= request.getContextPath() %>/ControladorCategoria?accion=listar">
                 <i class="fas fa-tags me-3"></i><span>Categor&iacute;as</span>
             </a>
-            <a class="nav-link" href="ControladorTienda?accion=listarProductos">
+            <a class="nav-link" href="<%= request.getContextPath() %>/ControladorTienda?accion=listarProductos">
                 <i class="fas fa-shop me-3"></i><span>Compras</span>
             </a>
-            <a class="nav-link text-warning mt-4" href="ControladorEmpleado?accion=logout">
+             <a class="nav-link text-warning mt-4" href="<%= request.getContextPath() %>/ControladorEmpleado?accion=logout">
                 <i class="fas fa-sign-out-alt me-3"></i><span>Cerrar Sesi&oacute;n</span>
             </a>
         </div>

@@ -69,11 +69,18 @@ public class ControladorBoleta extends HttpServlet {
                     break;
                 case "ver":
                     verBoleta(request, response);
+                    break;
                 case "exportarExcel":
                     exportarBoletasExcel(response);
                     break;
+                case "exportarPdf":
+                    exportarBoletasPdf(response);
+                    break;
                 case "exportarDetalleExcel":
                     exportarDetalleBoletaExcel(request, response);
+                    break;
+                case "exportarDetallePdf":
+                    exportarDetalleBoletaPdf(request, response);
                     break;
                 default:
                     listarBoletas(request, response);
@@ -88,6 +95,42 @@ public class ControladorBoleta extends HttpServlet {
             throws ServletException, IOException {
 
         List<clsBoleta> listaBoletas = boletaDAO.listar();
+         if (listaBoletas == null) {
+            listaBoletas = new ArrayList<>();
+        }
+
+        String idBoletaParam = request.getParameter("idBoleta");
+        int idBoletaSeleccionada = 0;
+
+        if (idBoletaParam != null && !idBoletaParam.trim().isEmpty()) {
+            try {
+                idBoletaSeleccionada = Integer.parseInt(idBoletaParam);
+            } catch (NumberFormatException e) {
+                idBoletaSeleccionada = 0;
+            }
+        }
+
+        if (idBoletaSeleccionada == 0 && !listaBoletas.isEmpty()) {
+            idBoletaSeleccionada = listaBoletas.get(0).getIdboleta();
+        }
+
+        clsBoleta boletaSeleccionada = null;
+        List<clsDetalle> detallesBoleta = new ArrayList<>();
+
+        if (idBoletaSeleccionada > 0) {
+            boletaSeleccionada = boletaDAO.listarPorId(idBoletaSeleccionada);
+            if (boletaSeleccionada != null) {
+                List<clsDetalle> detalles = detalleDAO.listarPorBoleta(idBoletaSeleccionada);
+                if (detalles != null) {
+                    detallesBoleta = detalles;
+                }
+            }
+        }
+
+        request.setAttribute("boletas", listaBoletas);
+        request.setAttribute("boletaSeleccionada", boletaSeleccionada);
+        request.setAttribute("detallesBoleta", detallesBoleta);
+        request.setAttribute("idBoletaSeleccionada", idBoletaSeleccionada);
         request.setAttribute("boletas", listaBoletas);
         request.getRequestDispatcher("boleta/listar.jsp").forward(request, response);
     }
@@ -146,6 +189,38 @@ public class ControladorBoleta extends HttpServlet {
             session.setAttribute("tipoMensaje", "error");
             response.sendRedirect("ControladorBoleta?accion=listar");
         }
+    }
+    
+    private void exportarBoletasPdf(HttpServletResponse response) throws IOException {
+        List<clsBoleta> boletas = boletaDAO.listar();
+        if (boletas == null) {
+            boletas = new ArrayList<>();
+        }
+
+        List<String> cabeceras = Arrays.asList("ID", "Número", "Fecha", "Hora",
+                "Cliente", "DNI", "Empleado", "Subtotal", "IGV", "Total", "Estado");
+
+        DateTimeFormatter formateadorFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter formateadorHora = DateTimeFormatter.ofPattern("HH:mm");
+        DecimalFormat formatoMoneda = new DecimalFormat("#,##0.00");
+
+        List<List<String>> filas = new ArrayList<>();
+        for (clsBoleta boleta : boletas) {
+            filas.add(Arrays.asList(
+                    String.valueOf(boleta.getIdboleta()),
+                    safeString(boleta.getNumeroBoleta()),
+                    formatFecha(boleta.getFechaEmision(), formateadorFecha),
+                    formatHora(boleta.getHoraEmision(), formateadorHora),
+                    safeString(boleta.getNombreCliente()),
+                    safeString(boleta.getDniCliente()),
+                    safeString(boleta.getNombreEmpleado()),
+                    formatMoneda(boleta.getSubtotal(), formatoMoneda),
+                    formatMoneda(boleta.getIgv(), formatoMoneda),
+                    formatMoneda(boleta.getTotal(), formatoMoneda),
+                    safeString(boleta.getEstadoBoleta())));
+        }
+
+        ExportUtil.exportToPdf(response, "boletas.pdf", "Listado de boletas", cabeceras, filas);
     }
 
     private void mostrarEdicion(HttpServletRequest request, HttpServletResponse response)
@@ -260,6 +335,62 @@ public class ControladorBoleta extends HttpServlet {
         }
 
         ExportUtil.exportToExcel(response, "boletas.xls", cabeceras, filas);
+    }
+     private void exportarDetalleBoletaPdf(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        HttpSession session = request.getSession();
+        String idBoletaParam = request.getParameter("idBoleta");
+
+        if (idBoletaParam == null || idBoletaParam.trim().isEmpty()) {
+            session.setAttribute("mensaje", "Debe seleccionar una boleta para exportar su detalle");
+            session.setAttribute("tipoMensaje", "error");
+            response.sendRedirect("ControladorBoleta?accion=listar");
+            return;
+        }
+
+        int idBoleta;
+        try {
+            idBoleta = Integer.parseInt(idBoletaParam);
+        } catch (NumberFormatException e) {
+            session.setAttribute("mensaje", "El identificador de la boleta no es válido");
+            session.setAttribute("tipoMensaje", "error");
+            response.sendRedirect("ControladorBoleta?accion=listar");
+            return;
+        }
+
+        clsBoleta boleta = boletaDAO.listarPorId(idBoleta);
+        if (boleta == null) {
+            session.setAttribute("mensaje", "No se encontró la boleta seleccionada");
+            session.setAttribute("tipoMensaje", "error");
+            response.sendRedirect("ControladorBoleta?accion=listar");
+            return;
+        }
+
+        List<clsDetalle> detalles = detalleDAO.listarPorBoleta(idBoleta);
+        if (detalles == null) {
+            detalles = new ArrayList<>();
+        }
+
+        List<String> cabeceras = Arrays.asList("ID Detalle", "Número Boleta", "Producto",
+                "Cantidad", "Precio Unitario", "Importe");
+        DecimalFormat formatoMoneda = new DecimalFormat("#,##0.00");
+
+        List<List<String>> filas = new ArrayList<>();
+        for (clsDetalle detalle : detalles) {
+            filas.add(Arrays.asList(
+                    String.valueOf(detalle.getIddetalle()),
+                    safeString(detalle.getNumeroBoleta()),
+                    safeString(detalle.getNombreproducto()),
+                    String.valueOf(detalle.getCantidad()),
+                    formatMoneda(detalle.getPrecioUnitario(), formatoMoneda),
+                    formatMoneda(detalle.getImporte(), formatoMoneda)));
+        }
+
+        String numeroBoleta = boleta.getNumeroBoleta() != null ? boleta.getNumeroBoleta() : "boleta";
+        String titulo = "Detalle de boleta " + numeroBoleta;
+        String nombreArchivo = "detalles_" + numeroBoleta.replace('-', '_') + ".pdf";
+
+        ExportUtil.exportToPdf(response, nombreArchivo, titulo, cabeceras, filas);
     }
 
     private void exportarDetalleBoletaExcel(HttpServletRequest request, HttpServletResponse response)
