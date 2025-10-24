@@ -1,14 +1,51 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="java.util.List, java.util.Map, Modelo.clsProducto, java.math.BigDecimal" %>
+<%@page import="java.util.List, java.util.Map, java.util.ArrayList, Modelo.clsProducto, java.math.BigDecimal, java.math.RoundingMode, Modelo.clsBoleta, Modelo.clsCliente" %>
 <%
-    String idTransaccion = (String) request.getAttribute("idTransaccion");
-    BigDecimal totalPedido = (BigDecimal) request.getAttribute("totalPedido");
-    List<Map<String, Object>> itemsComprobante = (List<Map<String, Object>>) request.getAttribute("itemsComprobante");
-    
-    if (idTransaccion == null) {
+    clsBoleta boleta = (clsBoleta) request.getAttribute("boleta");
+    if (boleta == null) {
         response.sendRedirect("ControladorTienda?accion=listarProductos");
         return;
     }
+     String idTransaccion = (String) request.getAttribute("idTransaccion");
+    if (idTransaccion == null || idTransaccion.trim().isEmpty()) {
+        idTransaccion = boleta.getNumeroBoleta();
+    }
+
+    BigDecimal totalPedido = boleta.getTotal() != null ? boleta.getTotal() : BigDecimal.ZERO;
+    BigDecimal subtotal = boleta.getSubtotal() != null ? boleta.getSubtotal() : totalPedido;
+    BigDecimal igv = boleta.getIgv() != null ? boleta.getIgv() : BigDecimal.ZERO;
+
+    subtotal = subtotal.setScale(2, RoundingMode.HALF_UP);
+    igv = igv.setScale(2, RoundingMode.HALF_UP);
+    totalPedido = totalPedido.setScale(2, RoundingMode.HALF_UP);
+
+    String numeroBoleta = boleta.getNumeroBoleta() != null ? boleta.getNumeroBoleta() : "BOL-000000";
+
+    java.time.format.DateTimeFormatter dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    java.time.format.DateTimeFormatter timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss");
+    String fechaEmisionTexto = boleta.getFechaEmision() != null
+            ? boleta.getFechaEmision().format(dateFormatter)
+            : new java.text.SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date());
+    String horaEmisionTexto = boleta.getHoraEmision() != null
+            ? boleta.getHoraEmision().format(timeFormatter)
+            : new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
+
+    List<Map<String, Object>> itemsComprobante = (List<Map<String, Object>>) request.getAttribute("itemsComprobante");
+    if (itemsComprobante == null) {
+        itemsComprobante = new ArrayList<>();
+    }
+
+    clsCliente cliente = (clsCliente) request.getAttribute("cliente");
+    String nombreCliente = cliente != null ? cliente.getNombreCompleto() : "Cliente";
+    String emailCliente = (cliente != null && cliente.getEmail() != null && !cliente.getEmail().isEmpty())
+            ? cliente.getEmail()
+            : "No registrado";
+    String telefonoCliente = (cliente != null && cliente.getTelefono() != null && !cliente.getTelefono().isEmpty())
+            ? cliente.getTelefono()
+            : "No registrado";
+    String direccionCliente = (cliente != null && cliente.getDireccion() != null && !cliente.getDireccion().isEmpty())
+            ? cliente.getDireccion()
+            : "No registrada";
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -259,6 +296,10 @@
                 <i class="fas fa-receipt me-2"></i>
                 ID de Transacción: <strong class="ms-2"><%= idTransaccion %></strong>
             </div>
+            <div class="info-badge d-inline-flex align-items-center ms-2 mt-3 mt-md-0">
+                <i class="fas fa-file-invoice me-2"></i>
+                Boleta N°: <strong class="ms-2"><%= numeroBoleta %></strong>
+            </div>
         </div>
         
         <!-- Confetti Animation -->
@@ -297,9 +338,13 @@
                                     <span class="text-muted">ID Transacción:</span>
                                     <span class="fw-bold"><%= idTransaccion %></span>
                                 </div>
+                                  <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Boleta N°:</span>
+                                    <span class="fw-bold"><%= numeroBoleta %></span>
+                                </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Fecha:</span>
-                                    <span class="fw-bold"><%= new java.util.Date() %></span>
+                                     <span class="fw-bold"><%= fechaEmisionTexto %> - <%= horaEmisionTexto %></span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Método de Pago:</span>
@@ -315,16 +360,20 @@
                                     <i class="fas fa-user me-2 text-primary"></i>Información del Cliente
                                 </h6>
                                 <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Cliente:</span>
+                                    <span class="fw-bold text-end"><%= nombreCliente %></span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Email:</span>
-                                    <span class="fw-bold">cliente@ejemplo.com</span>
+                                    <span class="fw-bold text-end"><%= emailCliente %></span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Teléfono:</span>
-                                    <span class="fw-bold">+51 XXX XXX XXX</span>
+                                    <span class="fw-bold text-end"><%= telefonoCliente %></span>
                                 </div>
                                 <div class="d-flex justify-content-between">
                                     <span class="text-muted">Envío a:</span>
-                                    <span class="fw-bold text-end">Dirección proporcionada</span>
+                                    <span class="fw-bold text-end"><%= direccionCliente %></span>
                                 </div>
                             </div>
                         </div>
@@ -349,7 +398,7 @@
                                             for (Map<String, Object> item : itemsComprobante) {
                                                 clsProducto producto = (clsProducto) item.get("producto");
                                                 int cantidad = (Integer) item.get("cantidad");
-                                                BigDecimal subtotal = (BigDecimal) item.get("subtotal");
+                                                BigDecimal subtotalItem = (BigDecimal) item.get("subtotal");
                                     %>
                                     <tr>
                                         <td>
@@ -371,7 +420,8 @@
                                             <strong>S/. <%= producto.getPrecio() %></strong>
                                         </td>
                                         <td class="text-end align-middle">
-                                            <strong class="text-success">S/. <%= subtotal %></strong>
+                                            <strong class="text-success">S/. <%= subtotalItem %></strong>
+
                                         </td>
                                     </tr>
                                     <%
@@ -381,6 +431,14 @@
                                 </tbody>
                                 <tfoot class="table-light">
                                     <tr>
+                                         <tr>
+                                        <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                                        <td class="text-end"><strong>S/. <%= subtotal %></strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>IGV (18%):</strong></td>
+                                        <td class="text-end"><strong>S/. <%= igv %></strong></td>
+                                    </tr>
                                         <td colspan="3" class="text-end"><strong>Total:</strong></td>
                                         <td class="text-end"><strong class="text-primary fs-5">S/. <%= totalPedido %></strong></td>
                                     </tr>
@@ -407,7 +465,7 @@
                                 <h6 class="fw-bold text-muted mb-1">En Camino</h6>
                                 <p class="text-muted mb-0">Tu pedido será enviado pronto</p>
                             </div>
-                            <div class="timeline-item">
+                            <div    class="timeline-item">
                                 <h6 class="fw-bold text-muted mb-1">Entregado</h6>
                                 <p class="text-muted mb-0">Espera la entrega en tu domicilio</p>
                             </div>
@@ -465,7 +523,7 @@
                 <div class="print-only text-center mt-4">
                     <p class="mb-1">Gracias por tu compra - GabrielaSHOP</p>
                     <p class="mb-0 text-muted">www.GabrielaSHOP.com - contacto@GabrielaSHOP.com</p>
-                    <p class="text-muted small">ID Transacción: <%= idTransaccion %></p>
+                    <p class="text-muted small">ID Transacción: <%= idTransaccion %> | Boleta N°: <%= numeroBoleta %></p>
                 </div>
             </div>
         </div>

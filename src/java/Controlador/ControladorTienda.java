@@ -17,15 +17,33 @@ import java.time.format.DateTimeFormatter;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import Util.ExportUtil;
+import ModeloDAO.clsBoletaDAO;
+import ModeloDAO.clsDetalleDAO;
+import ModeloDAO.clsEmpleadoDAO;
+import Modelo.clsBoleta;
+import Modelo.clsDetalle;
+import Modelo.clsCliente;
+import Modelo.clsEmpleado;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @WebServlet("/ControladorTienda")
 public class ControladorTienda extends HttpServlet {
 
     private clsProductoDAO productoDAO;
+    private clsBoletaDAO boletaDAO;
+    private clsDetalleDAO detalleDAO;
+    private clsEmpleadoDAO empleadoDAO;
+    private Integer empleadoOnlineId;
+    private static final BigDecimal IGV_RATE = new BigDecimal("0.18");
 
     @Override
     public void init() throws ServletException {
         productoDAO = new clsProductoDAO();
+        boletaDAO = new clsBoletaDAO();
+        detalleDAO = new clsDetalleDAO();
+        empleadoDAO = new clsEmpleadoDAO();
+
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -328,6 +346,21 @@ public class ControladorTienda extends HttpServlet {
         HttpSession session = request.getSession();
         Map<Integer, Integer> carrito = obtenerCarrito(session);
 
+        if (carrito.isEmpty()) {
+            session.setAttribute("mensaje", "El carrito está vacío");
+            session.setAttribute("tipoMensaje", "error");
+            response.sendRedirect(request.getContextPath() + "/ControladorTienda?accion=listarProductos");
+            return;
+        }
+
+        clsCliente cliente = (clsCliente) session.getAttribute("cliente");
+        if (cliente == null) {
+            session.setAttribute("mensaje", "✗ Debes iniciar sesión para completar la compra.");
+            session.setAttribute("tipoMensaje", "error");
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+
         // 1. Verificar stock antes del pago
         for (Map.Entry<Integer, Integer> entry : carrito.entrySet()) {
             clsProducto producto = productoDAO.listarPorId(entry.getKey());
@@ -339,18 +372,75 @@ public class ControladorTienda extends HttpServlet {
             }
         }
 
-        // 2. Simular pago PayPal
-        String idTransaccion = "PAYPAL_TXN_" + System.currentTimeMillis();
+        BigDecimal totalPedido = calcularTotal(carrito).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal subtotal = totalPedido.divide(BigDecimal.ONE.add(IGV_RATE), 2, RoundingMode.HALF_UP);
+        BigDecimal igv = totalPedido.subtract(subtotal).setScale(2, RoundingMode.HALF_UP);
+
+        int idEmpleado = obtenerIdEmpleadoResponsable(session);
+
+        clsBoleta boleta = new clsBoleta();
+        boleta.setNumeroBoleta(boletaDAO.generarNumeroBoleta());
+        boleta.setFechaEmision(LocalDate.now());
+        boleta.setHoraEmision(LocalTime.now());
+        boleta.setSubtotal(subtotal);
+        boleta.setIgv(igv);
+        boleta.setTotal(totalPedido);
+        boleta.setEstadoBoleta("ACTIVA");
+        boleta.setIdcliente(cliente.getIdcliente());
+        boleta.setIdempleado(idEmpleado);
+
+        if (!boletaDAO.agregar(boleta)) {
+            session.setAttribute("mensaje", "✗ Ocurrió un problema al generar la boleta. Intenta nuevamente.");
+            session.setAttribute("tipoMensaje", "error");
+            response.sendRedirect(request.getContextPath() + "/ControladorTienda?accion=checkout");
+            return;
+        }
 
         // 3. Actualizar stock en BD
+        List<Map<String, Object>> itemsComprobante = new ArrayList<>();
         for (Map.Entry<Integer, Integer> entry : carrito.entrySet()) {
-            productoDAO.actualizarStock(entry.getKey(), entry.getValue());
+            clsProducto producto = productoDAO.listarPorId(entry.getKey());
+            if (producto == null) {
+                continue;
+            }
+
+            int cantidad = entry.getValue();
+            BigDecimal subtotalItem = producto.getPrecio().multiply(BigDecimal.valueOf(cantidad)).setScale(2, RoundingMode.HALF_UP);
+
+            clsDetalle detalle = new clsDetalle();
+            detalle.setIdboleta(boleta.getIdboleta());
+            detalle.setIdproducto(producto.getIdproducto());
+            detalle.setCantidad(cantidad);
+            detalle.setPrecioUnitario(producto.getPrecio());
+            detalle.setImporte(subtotalItem);
+            detalleDAO.agregar(detalle);
+
+            productoDAO.actualizarStock(producto.getIdproducto(), cantidad);
+
+            Map<String, Object> item = new HashMap<>();
+            item.put("producto", producto);
+            item.put("cantidad", cantidad);
+            item.put("subtotal", subtotalItem);
+            itemsComprobante.add(item);
         }
 
         // 4. Guardar datos para comprobante
-        session.setAttribute("idTransaccion", idTransaccion);
-        session.setAttribute("totalPedido", calcularTotal(carrito));
-        session.setAttribute("itemsPedido", new HashMap<>(carrito)); // Copia del carrito
+        String idTransaccion = "PAYPAL_TXN_" + System.currentTimeMillis();
+
+        session.setAttribute("paypalTransactionId", idTransaccion);
+        session.setAttribute("boletaGenerada", boleta);
+        session.setAttribute("detallesBoleta", itemsComprobante);
+
+        Map<String, Object> comprobanteData = new HashMap<>();
+        comprobanteData.put("idTransaccion", idTransaccion);
+        comprobanteData.put("boleta", boleta);
+        comprobanteData.put("items", new ArrayList<>(itemsComprobante));
+        comprobanteData.put("subtotal", subtotal);
+        comprobanteData.put("igv", igv);
+        comprobanteData.put("totalPedido", totalPedido);
+        comprobanteData.put("numeroBoleta", boleta.getNumeroBoleta());
+        comprobanteData.put("fecha", new Date());
+        session.setAttribute("comprobantePago", comprobanteData);
 
         // 5. Vaciar carrito
         carrito.clear();
@@ -361,50 +451,56 @@ public class ControladorTienda extends HttpServlet {
     private void mostrarExito(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession();
-        String idTransaccion = (String) session.getAttribute("idTransaccion");
-        BigDecimal totalPedido = (BigDecimal) session.getAttribute("totalPedido");
+        String idTransaccion = (String) session.getAttribute("paypalTransactionId");
+        clsBoleta boleta = (clsBoleta) session.getAttribute("boletaGenerada");
+        List<Map<String, Object>> itemsComprobante = (List<Map<String, Object>>) session.getAttribute("detallesBoleta");
 
-        if (idTransaccion == null) {
+        if (boleta == null) {
             response.sendRedirect(request.getContextPath() + "/ControladorTienda?accion=listarProductos");
             return;
         }
 
         // Recuperar items del pedido para el comprobante
-        Map<Integer, Integer> itemsPedido = (Map<Integer, Integer>) session.getAttribute("itemsPedido");
-        List<Map<String, Object>> itemsComprobante = new ArrayList<>();
+        if (itemsComprobante == null) {
+            itemsComprobante = new ArrayList<>();
+        }
 
-        if (itemsPedido != null) {
-            for (Map.Entry<Integer, Integer> entry : itemsPedido.entrySet()) {
-                clsProducto producto = productoDAO.listarPorId(entry.getKey());
-                if (producto != null) {
-                    Map<String, Object> item = new HashMap<>();
-                    item.put("producto", producto);
-                    item.put("cantidad", entry.getValue());
-                    item.put("subtotal", producto.getPrecio().multiply(BigDecimal.valueOf(entry.getValue())));
-                    itemsComprobante.add(item);
-                }
-            }
+        if (idTransaccion == null || idTransaccion.isEmpty()) {
+            idTransaccion = boleta.getNumeroBoleta();
         }
 
         request.setAttribute("idTransaccion", idTransaccion);
-        request.setAttribute("totalPedido", totalPedido);
+        request.setAttribute("totalPedido", boleta.getTotal());
         request.setAttribute("itemsComprobante", itemsComprobante);
-        
-         Map<String, Object> comprobanteData = new HashMap<>();
+
+        request.setAttribute("boleta", boleta);
+
+        clsCliente cliente = (clsCliente) session.getAttribute("cliente");
+        if (cliente != null) {
+            request.setAttribute("cliente", cliente);
+        }
+
+        Map<String, Object> comprobanteData = (Map<String, Object>) session.getAttribute("comprobantePago");
+        if (comprobanteData == null) {
+            comprobanteData = new HashMap<>();
+        }
         comprobanteData.put("idTransaccion", idTransaccion);
-        comprobanteData.put("totalPedido", totalPedido);
-        comprobanteData.put("items", new ArrayList<>(itemsComprobante));
-        comprobanteData.put("fecha", new Date());
+        comprobanteData.put("boleta", boleta);
+        comprobanteData.put("subtotal", boleta.getSubtotal());
+        comprobanteData.put("igv", boleta.getIgv());
+        comprobanteData.put("totalPedido", boleta.getTotal());
+        comprobanteData.put("numeroBoleta", boleta.getNumeroBoleta());
+        comprobanteData.putIfAbsent("fecha", new Date());
         session.setAttribute("comprobantePago", comprobanteData);
 
         request.getRequestDispatcher("/tienda/exito.jsp").forward(request, response);
 
         // Limpiar session
-        session.removeAttribute("idTransaccion");
-        session.removeAttribute("totalPedido");
-        session.removeAttribute("itemsPedido");
+        session.removeAttribute("paypalTransactionId");
+        session.removeAttribute("boletaGenerada");
+        session.removeAttribute("detallesBoleta");
     }
-    
+
     private void exportarComprobantePdf(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
 
@@ -423,15 +519,28 @@ public class ControladorTienda extends HttpServlet {
         }
 
         String idTransaccion = (String) comprobanteData.get("idTransaccion");
-        BigDecimal totalPedido = (BigDecimal) comprobanteData.get("totalPedido");
+        clsBoleta boleta = (clsBoleta) comprobanteData.get("boleta");
+        BigDecimal subtotal = boleta != null ? boleta.getSubtotal() : (BigDecimal) comprobanteData.get("subtotal");
+        BigDecimal igv = boleta != null ? boleta.getIgv() : (BigDecimal) comprobanteData.get("igv");
+        BigDecimal totalPedido = boleta != null ? boleta.getTotal() : (BigDecimal) comprobanteData.get("totalPedido");
+        String numeroBoleta = boleta != null ? boleta.getNumeroBoleta() : (String) comprobanteData.get("numeroBoleta");
         Date fecha = (Date) comprobanteData.get("fecha");
         List<Map<String, Object>> itemsComprobante = (List<Map<String, Object>>) comprobanteData.get("items");
 
         if (totalPedido == null) {
             totalPedido = BigDecimal.ZERO;
         }
+        if (subtotal == null) {
+            subtotal = BigDecimal.ZERO;
+        }
+        if (igv == null) {
+            igv = BigDecimal.ZERO;
+        }
         if (fecha == null) {
             fecha = new Date();
+        }
+        if (numeroBoleta == null || numeroBoleta.isEmpty()) {
+            numeroBoleta = "BOL-000000";
         }
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
@@ -439,15 +548,15 @@ public class ControladorTienda extends HttpServlet {
 
         List<String> headers = Arrays.asList("Producto", "Cantidad", "Precio Unit.", "Subtotal");
         List<List<String>> rows = new ArrayList<>();
-        rows.add(Arrays.asList("ID Transacción: " + (idTransaccion != null ? idTransaccion : "-"), "", "Fecha:", fechaTexto));
-        rows.add(Arrays.asList("Método de Pago: PayPal", "", "Total Pedido:", "S/. " + totalPedido));
+        rows.add(Arrays.asList("N° Boleta: " + numeroBoleta, "", "Fecha:", fechaTexto));
+        rows.add(Arrays.asList("ID Transacción: " + (idTransaccion != null ? idTransaccion : "-"), "", "Método de Pago:", "PayPal"));
         rows.add(Arrays.asList("", "", "", ""));
 
         if (itemsComprobante != null) {
             for (Map<String, Object> item : itemsComprobante) {
                 clsProducto producto = (clsProducto) item.get("producto");
                 Integer cantidad = (Integer) item.get("cantidad");
-                BigDecimal subtotal = (BigDecimal) item.get("subtotal");
+                BigDecimal subtotalItem = (BigDecimal) item.get("subtotal");
 
                 String nombreProducto = producto != null ? producto.getNombreproducto() : "Producto";
                 String precioUnitario = producto != null && producto.getPrecio() != null
@@ -458,17 +567,41 @@ public class ControladorTienda extends HttpServlet {
                         nombreProducto,
                         cantidad != null ? cantidad.toString() : "",
                         precioUnitario,
-                        subtotal != null ? "S/. " + subtotal : ""
+                        subtotalItem != null ? "S/. " + subtotalItem : ""
                 ));
             }
         }
 
-        rows.add(Arrays.asList("", "", "TOTAL:", "S/. " + totalPedido));
+        rows.add(Arrays.asList("", "", "Subtotal:", "S/. " + subtotal.setScale(2, RoundingMode.HALF_UP)));
+        rows.add(Arrays.asList("", "", "IGV (18%):", "S/. " + igv.setScale(2, RoundingMode.HALF_UP)));
+        rows.add(Arrays.asList("", "", "TOTAL:", "S/. " + totalPedido.setScale(2, RoundingMode.HALF_UP)));
 
-        String fileName = "comprobante_" + (idTransaccion != null ? idTransaccion : "pedido") + ".pdf";
-        String title = "Comprobante de Pago - " + (idTransaccion != null ? idTransaccion : "Pedido");
+        String identificadorArchivo = numeroBoleta.replace('-', '_');
+        String fileName = "comprobante_" + identificadorArchivo + ".pdf";
+        String title = "Comprobante de Pago - " + numeroBoleta;
 
         ExportUtil.exportToPdf(response, fileName, title, headers, rows);
+    }
+
+    private synchronized int obtenerIdEmpleadoResponsable(HttpSession session) {
+        clsEmpleado empleadoSesion = (clsEmpleado) session.getAttribute("empleado");
+        if (empleadoSesion != null) {
+            return empleadoSesion.getIdempleado();
+        }
+
+        if (empleadoOnlineId != null) {
+            return empleadoOnlineId;
+        }
+
+        if (empleadoDAO != null) {
+            List<clsEmpleado> empleadosActivos = empleadoDAO.listar();
+            if (empleadosActivos != null && !empleadosActivos.isEmpty()) {
+                empleadoOnlineId = empleadosActivos.get(0).getIdempleado();
+                return empleadoOnlineId;
+            }
+        }
+
+        return 1;
     }
 
     @Override

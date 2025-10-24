@@ -3,19 +3,19 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/src/java/Controlador/ControladorCliente.java</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/src/java/Controlador/ControladorEmpleado.java</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/src/java/Util/ExportUtil.java</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/web/categoria/listar.jsp</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/web/producto/listar.jsp</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/web/empleado/listar.jsp</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/web/cliente/listar.jsp</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/src/java/Controlador/ControladorProducto.java</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/src/java/Controlador/ControladorTipoDocumento.java</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/src/java/Controlador/ControladorTienda.java</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/web/tienda/carrito.jsp</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/src/java/Controlador/ControladorCategoria.java</file>
-            <file>file:/D:/Proyecto%20unidad%20ii/Nueva%20carpeta/s/MVCsistematienda_GECA/web/tienda/exito.jsp</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/dashboard.jsp</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsDetalleDAO.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Controlador/ControladorDetalle.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsTipoDocumentoDAO.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/tienda/checkout.jsp</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsCargoDAO.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsBoletaDAO.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/tienda/exito.jsp</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsEmpleadoDAO.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Controlador/ControladorBoleta.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/ModeloDAO/clsMarcaDAO.java</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/web/login.jsp</file>
+            <file>file:/C:/s/MVCsistematienda_GECA/MVCsistematienda_GECA/src/java/Controlador/ControladorTienda.java</file>
         </group>
     </open-files>
 </project-private>
