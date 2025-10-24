@@ -316,6 +316,9 @@
                     <a href="ControladorTienda?accion=listarProductos" class="btn btn-outline-primary flex-fill">
                         <i class="fas fa-arrow-left me-2"></i>Seguir Comprando
                     </a>
+                     <a href="ControladorTienda?accion=exportarCarritoExcel" class="btn btn-outline-success flex-fill">
+                        <i class="fas fa-file-excel me-2"></i>Exportar a Excel
+                    </a>
                     <form action="ControladorTienda" method="post" class="flex-fill">
                         <input type="hidden" name="accion" value="vaciarCarrito">
                         <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('¿Estás seguro de vaciar el carrito?')">

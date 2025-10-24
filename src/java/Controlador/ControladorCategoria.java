@@ -10,26 +10,30 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import Util.ExportUtil;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @WebServlet("/ControladorCategoria")
 public class ControladorCategoria extends HttpServlet {
-    
+
     private clsCategoriaDAO categoriaDAO;
-    
+
     @Override
     public void init() throws ServletException {
         categoriaDAO = new clsCategoriaDAO();
     }
-    
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        
+
         String accion = request.getParameter("accion");
-        
+
         // Debug: imprimir la acción recibida
         System.out.println("=== CONTROLADOR CATEGORÍA - ACCIÓN: " + accion + " ===");
-        
+
         try {
             switch (accion) {
                 case "listar":
@@ -56,6 +60,12 @@ public class ControladorCategoria extends HttpServlet {
                 case "reactivar":
                     reactivarCategoria(request, response);
                     break;
+                case "exportarExcel":
+                    exportarCategoriasExcel(response);
+                    break;
+                case "exportarPdf":
+                    exportarCategoriasPdf(response);
+                    break;
                 default:
                     listarCategorias(request, response);
                     break;
@@ -68,50 +78,50 @@ public class ControladorCategoria extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ControladorCategoria?accion=listar");
         }
     }
-    
+
     private void listarCategorias(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         System.out.println("=== LISTANDO CATEGORÍAS ACTIVAS ===");
-        
+
         List<clsCategoria> listaCategorias = categoriaDAO.listar();
         List<clsCategoria> listaCategoriasInactivas = categoriaDAO.listarInactivas();
-        
+
         System.out.println("Categorías activas: " + listaCategorias.size());
         System.out.println("Categorías inactivas: " + listaCategoriasInactivas.size());
-        
+
         request.setAttribute("categorias", listaCategorias);
         request.setAttribute("categoriasInactivas", listaCategoriasInactivas);
         request.setAttribute("mostrarInactivas", false);
         request.getRequestDispatcher("/categoria/listar.jsp").forward(request, response);
     }
-    
+
     private void listarCategoriasInactivas(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         System.out.println("=== LISTANDO CATEGORÍAS INACTIVAS ===");
-        
+
         List<clsCategoria> listaCategorias = categoriaDAO.listar();
         List<clsCategoria> listaCategoriasInactivas = categoriaDAO.listarInactivas();
-        
+
         System.out.println("Categorías activas: " + listaCategorias.size());
         System.out.println("Categorías inactivas: " + listaCategoriasInactivas.size());
-        
+
         request.setAttribute("categorias", listaCategorias);
         request.setAttribute("categoriasInactivas", listaCategoriasInactivas);
         request.setAttribute("mostrarInactivas", true);
         request.getRequestDispatcher("/categoria/listar.jsp").forward(request, response);
     }
-    
+
     private void reactivarCategoria(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             System.out.println("=== REACTIVANDO CATEGORÍA ID: " + id + " ===");
-            
+
             boolean exito = categoriaDAO.reactivar(id);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Categoría reactivada correctamente");
@@ -129,29 +139,29 @@ public class ControladorCategoria extends HttpServlet {
             session.setAttribute("tipoMensaje", "error");
             System.out.println("Excepción al reactivar categoría: " + e.getMessage());
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorCategoria?accion=listarInactivas");
     }
-    
+
     private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.getRequestDispatcher("/categoria/formulario.jsp").forward(request, response);
     }
-    
+
     private void agregarCategoria(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             String nombre = request.getParameter("nombre");
             String descripcion = request.getParameter("descripcion");
-            
+
             clsCategoria categoria = new clsCategoria();
             categoria.setNombrecategoria(nombre);
             categoria.setDescripcion(descripcion);
-            
+
             boolean exito = categoriaDAO.agregar(categoria);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Categoría agregada correctamente");
@@ -166,17 +176,17 @@ public class ControladorCategoria extends HttpServlet {
             session.setAttribute("mensaje", "Error en los datos: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorCategoria?accion=listar");
     }
-    
+
     private void mostrarEdicion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             clsCategoria categoria = categoriaDAO.listarPorId(id);
-            
+
             if (categoria != null) {
                 request.setAttribute("categoria", categoria);
                 request.getRequestDispatcher("/categoria/editar.jsp").forward(request, response);
@@ -188,22 +198,22 @@ public class ControladorCategoria extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ControladorCategoria?accion=listar");
         }
     }
-    
+
     private void actualizarCategoria(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             String nombre = request.getParameter("nombre");
             String descripcion = request.getParameter("descripcion");
-            
+
             clsCategoria categoria = new clsCategoria();
             categoria.setIdcategoria(id);
             categoria.setNombrecategoria(nombre);
             categoria.setDescripcion(descripcion);
-            
+
             boolean exito = categoriaDAO.actualizar(categoria);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Categoría actualizada correctamente");
@@ -218,17 +228,17 @@ public class ControladorCategoria extends HttpServlet {
             session.setAttribute("mensaje", "Error en los datos: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorCategoria?accion=listar");
     }
-    
+
     private void eliminarCategoria(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             boolean exito = categoriaDAO.eliminar(id);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Categoría eliminada correctamente");
@@ -243,9 +253,73 @@ public class ControladorCategoria extends HttpServlet {
             session.setAttribute("mensaje", "Error: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorCategoria?accion=listar");
     }
+     private void exportarCategoriasExcel(HttpServletResponse response) throws IOException {
+        List<clsCategoria> categorias = obtenerTodasLasCategorias();
+
+        List<String> cabeceras = Arrays.asList("ID", "Nombre", "Descripción", "Estado",
+                "Fecha Creación", "Última Actualización");
+
+        List<List<String>> filas = new ArrayList<>();
+        for (clsCategoria categoria : categorias) {
+            filas.add(Arrays.asList(
+                    String.valueOf(categoria.getIdcategoria()),
+                    safeString(categoria.getNombrecategoria()),
+                    safeString(categoria.getDescripcion()),
+                    formatearEstado(categoria.getEstado()),
+                    formatearFecha(categoria.getFechaCreacion()),
+                    formatearFecha(categoria.getFechaActualizacion())));
+        }
+
+        ExportUtil.exportToExcel(response, "categorias.xls", cabeceras, filas);
+    }
+
+    private void exportarCategoriasPdf(HttpServletResponse response) throws IOException {
+        List<clsCategoria> categorias = obtenerTodasLasCategorias();
+
+        List<String> cabeceras = Arrays.asList("ID", "Nombre", "Estado", "Creación");
+        List<List<String>> filas = new ArrayList<>();
+        for (clsCategoria categoria : categorias) {
+            filas.add(Arrays.asList(
+                    String.valueOf(categoria.getIdcategoria()),
+                    safeString(categoria.getNombrecategoria()),
+                    formatearEstado(categoria.getEstado()),
+                    formatearFecha(categoria.getFechaCreacion())));
+        }
+
+        ExportUtil.exportToPdf(response, "categorias.pdf", "Listado de categorías", cabeceras, filas);
+    }
+
+    private List<clsCategoria> obtenerTodasLasCategorias() {
+        List<clsCategoria> categorias = new ArrayList<>();
+
+        List<clsCategoria> activas = categoriaDAO.listar();
+        if (activas != null) {
+            categorias.addAll(activas);
+        }
+
+        List<clsCategoria> inactivas = categoriaDAO.listarInactivas();
+        if (inactivas != null) {
+            categorias.addAll(inactivas);
+        }
+
+        return categorias;
+    }
+
+    private String safeString(String value) {
+        return value != null ? value : "";
+    }
+
+    private String formatearEstado(int estado) {
+        return estado == 1 ? "Activa" : "Inactiva";
+    }
+
+    private String formatearFecha(LocalDateTime fecha) {
+        return fecha != null ? fecha.toLocalDate().toString() : "";
+    }
+
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

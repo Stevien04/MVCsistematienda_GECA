@@ -440,7 +440,8 @@
                         <a href="ControladorTienda?accion=listarProductos" class="btn btn-primary px-4 py-2">
                             <i class="fas fa-shopping-bag me-2"></i>Seguir Comprando
                         </a>
-                        <a href="#" class="btn btn-success-outline">
+                        <a href="<%= request.getContextPath() %>/ControladorTienda?accion=exportarComprobantePdf" 
+                           class="btn btn-success-outline" target="_blank" rel="noopener">
                             <i class="fas fa-download me-2"></i>Descargar PDF
                         </a>
                     </div>
@@ -540,11 +541,7 @@
             // setTimeout(() => window.print(), 2000);
         });
         
-        // Download PDF simulation
-        document.querySelector('.btn-success-outline:nth-child(3)').addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('La función de descarga PDF estará disponible próximamente');
-        });
+       
         
         // Share buttons
         document.querySelectorAll('.share-btn').forEach(btn => {
