@@ -3,7 +3,7 @@
     String mensaje = (String) session.getAttribute("mensaje");
     String tipoMensaje = (String) session.getAttribute("tipoMensaje");
     
-    // Limpiar mensajes después de mostrarlos
+    
     if (mensaje != null) {
         session.removeAttribute("mensaje");
         session.removeAttribute("tipoMensaje");
