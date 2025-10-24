@@ -35,7 +35,7 @@
             <a class="nav-link" href="dashboard.jsp">
                 <i class="fas fa-tachometer-alt me-3"></i><span>Dashboard</span>
             </a>
-            <a class="nav-link" href="<%= request.getContextPath() %>/ DASHBOARD/Estadistica.jsp">
+            <a class="nav-link" href="<%= request.getContextPath() %>/dashboard/Estadistica.jsp">
                 <i class="fas fa-chart-bar me-3"></i><span>Estadísticas</span>
             </a>
             <a class="nav-link" href="ControladorEmpleado?accion=listar">

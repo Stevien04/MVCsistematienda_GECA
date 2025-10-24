@@ -229,10 +229,15 @@
                                     <h6 class="fw-bold mb-2">
                                         <i class="fas fa-info-circle me-2 text-info"></i>Información para Clientes
                                     </h6>
-                                    <p class="mb-2 small">Si es cliente nuevo, regístrese primero en la tienda.</p>
-                                    <a href="ControladorTienda?accion=listarProductos" class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="fas fa-store me-1"></i>Ir a la Tienda
-                                    </a>
+                                     <p class="mb-2 small">¿Eres nuevo en la tienda? Regístrate antes de iniciar sesión.</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="ControladorRegistroCliente?accion=mostrarFormulario" class="btn btn-success btn-sm">
+                                            <i class="fas fa-user-plus me-1"></i>Registrarme como Cliente
+                                        </a>
+                                        <a href="ControladorTienda?accion=listarProductos" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-store me-1"></i>Conocer la Tienda
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

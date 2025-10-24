@@ -150,6 +150,13 @@
         .list-group-transparent .badge {
             font-size: 0.85rem;
         }
+        /* Corrección: limitar altura del gráfico de productos */
+        #chartProductos {
+            max-height: 250px !important;
+        }
+        .card-dashboard .card-body {
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -161,9 +168,7 @@
             <div class="row g-4">
                 <div class="col-xxl-3 col-md-6">
                     <div class="stat-card bg-gradient-primary">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-users"></i>
-                        </div>
+                        <div class="icon-wrapper"><i class="fas fa-users"></i></div>
                         <div class="stat-value"><%= integerFormatter.format(totalClientes) %></div>
                         <div class="stat-label">Clientes activos</div>
                         <small class="opacity-75">Clientes registrados con estado activo.</small>
@@ -171,9 +176,7 @@
                 </div>
                 <div class="col-xxl-3 col-md-6">
                     <div class="stat-card bg-gradient-success">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-boxes"></i>
-                        </div>
+                        <div class="icon-wrapper"><i class="fas fa-boxes"></i></div>
                         <div class="stat-value"><%= integerFormatter.format(totalProductos) %></div>
                         <div class="stat-label">Productos disponibles</div>
                         <small class="opacity-75">Inventario activo listo para la venta.</small>
@@ -181,9 +184,7 @@
                 </div>
                 <div class="col-xxl-3 col-md-6">
                     <div class="stat-card bg-gradient-warning">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-receipt"></i>
-                        </div>
+                        <div class="icon-wrapper"><i class="fas fa-receipt"></i></div>
                         <div class="stat-value"><%= integerFormatter.format(totalVentas) %></div>
                         <div class="stat-label">Ventas registradas</div>
                         <small class="opacity-75">Comprobantes emitidos en el sistema.</small>
@@ -191,9 +192,7 @@
                 </div>
                 <div class="col-xxl-3 col-md-6">
                     <div class="stat-card bg-gradient-danger">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-shopping-basket"></i>
-                        </div>
+                        <div class="icon-wrapper"><i class="fas fa-shopping-basket"></i></div>
                         <div class="stat-value"><%= integerFormatter.format(totalUnidadesVendidas) %></div>
                         <div class="stat-label">Unidades vendidas</div>
                         <small class="opacity-75">Cantidad total de productos vendidos.</small>
@@ -204,9 +203,7 @@
             <div class="row g-4 mt-1">
                 <div class="col-xxl-3 col-md-6">
                     <div class="stat-card bg-gradient-info">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-sack-dollar"></i>
-                        </div>
+                        <div class="icon-wrapper"><i class="fas fa-sack-dollar"></i></div>
                         <div class="stat-value"><%= currencyFormatter.format(totalIngresos) %></div>
                         <div class="stat-label">Ingresos totales</div>
                         <small class="opacity-75">Monto generado por las ventas registradas.</small>
@@ -214,24 +211,16 @@
                 </div>
                 <div class="col-xxl-3 col-md-6">
                     <div class="stat-card bg-gradient-secondary">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-crown"></i>
-                        </div>
-                        <div class="stat-value" style="font-size: 1.2rem; line-height: 1.4;">
-                            <%= categoriaMasVendida %>
-                        </div>
+                        <div class="icon-wrapper"><i class="fas fa-crown"></i></div>
+                        <div class="stat-value" style="font-size: 1.2rem; line-height: 1.4;"><%= categoriaMasVendida %></div>
                         <div class="stat-label">Catálogo más vendido</div>
                         <small class="opacity-75">Categoría con mayor rotación en ventas.</small>
                     </div>
                 </div>
                 <div class="col-xxl-6 col-md-12">
                     <div class="stat-card bg-gradient-primary" style="background: linear-gradient(135deg, rgba(102,126,234,0.95) 0%, rgba(118,75,162,0.95) 100%);">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-value" style="font-size: 1.2rem; line-height: 1.4;">
-                            <%= productoMasVendido %>
-                        </div>
+                        <div class="icon-wrapper"><i class="fas fa-star"></i></div>
+                        <div class="stat-value" style="font-size: 1.2rem; line-height: 1.4;"><%= productoMasVendido %></div>
                         <div class="stat-label">Producto destacado</div>
                         <small class="opacity-75">El artículo con mayor demanda en el periodo.</small>
                     </div>
@@ -260,10 +249,7 @@
                                             int porcentaje = (int) Math.round((resumen.getTotal() * 100.0) / maxCategorias);
                                         %>
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <i class="fas fa-tag text-primary me-2"></i>
-                                                    <strong><%= resumen.getNombre() %></strong>
-                                                </div>
+                                                <div><i class="fas fa-tag text-primary me-2"></i><strong><%= resumen.getNombre() %></strong></div>
                                                 <span class="badge bg-light text-dark">
                                                     <%= integerFormatter.format(resumen.getTotal()) %> uds · <%= porcentaje %>%
                                                 </span>
@@ -289,7 +275,9 @@
                                     <p class="mb-0">No hay productos vendidos para analizar.</p>
                                 </div>
                             <% } else { %>
-                                <canvas id="chartProductos" height="180"></canvas>
+                                <div style="height:250px;">
+                                    <canvas id="chartProductos"></canvas>
+                                </div>
                                 <div class="mt-4">
                                     <% for (clsResumenVenta resumen : productosTop) { 
                                         int porcentaje = (int) Math.round((resumen.getTotal() * 100.0) / maxProductos);
@@ -318,42 +306,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function () {
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.getElementById('mainContent');
-                sidebar.classList.toggle('sidebar-collapsed');
-                mainContent.classList.toggle('main-content-expanded');
-            });
-        }
-
-        const estadisticaLink = document.querySelector('#sidebar .nav-link[href$="Estadistica.jsp"]');
-        if (estadisticaLink) {
-            document.querySelectorAll('#sidebar .nav-link').forEach(link => link.classList.remove('active'));
-            estadisticaLink.classList.add('active');
-        }
-
-        function updateDateTime() {
-            const now = new Date();
-            const options = {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            };
-            const dateTimeString = now.toLocaleDateString('es-ES', options);
-            const dateTimeElement = document.getElementById('currentDateTime');
-            if (dateTimeElement) {
-                dateTimeElement.textContent = dateTimeString;
-            }
-        }
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
-
         const chartCategoriasEl = document.getElementById('chartCategorias');
         if (chartCategoriasEl) {
             new Chart(chartCategoriasEl.getContext('2d'), {
@@ -367,14 +319,7 @@
                     }]
                 },
                 options: {
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                usePointStyle: true
-                            }
-                        }
-                    }
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true } } }
                 }
             });
         }
@@ -395,20 +340,10 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                    plugins: { legend: { display: false } }
                 }
             });
         }
