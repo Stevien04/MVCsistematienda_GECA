@@ -275,30 +275,39 @@ public class clsClienteDAO implements CRUDCliente {
         return exito;
     }
     
-    // Agrega este método a tu clsClienteDAO existente
-    public clsCliente login(String usuario, String password) {
-        clsCliente cliente = null;
-        String sql = "SELECT c.*, td.nombretipodocumento, td.abreviatura "
-                + "FROM tbcliente c "
-                + "INNER JOIN tbtipodocumento td ON c.idtipodocumento = td.idtipodocumento "
-                + "WHERE c.usuario = ? AND c.password = ? AND c.estado = 1";
+   public clsCliente login(String usuario, String password) {
+    clsCliente cliente = null;
+    String sql = "SELECT * FROM tbcliente " +
+                 "WHERE (email = ? OR dni = ?) AND password = ? AND estado = 1";
 
-        try {
-            preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, usuario);
-            preparedStatement.setString(2, password);
-            resultSet = preparedStatement.executeQuery();
+    try {
+        preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setString(1, usuario); // puede ser email o DNI
+        preparedStatement.setString(2, usuario);
+        preparedStatement.setString(3, password);
+        resultSet = preparedStatement.executeQuery();
 
-            if (resultSet.next()) {
-                cliente = mapearClienteCompleto(resultSet);
-            }
-        } catch (SQLException e) {
-            System.out.println("Error en login de cliente: " + e.getMessage());
-        } finally {
-            closeResources();
+        if (resultSet.next()) {
+            cliente = new clsCliente();
+            cliente.setIdcliente(resultSet.getInt("idcliente"));
+            cliente.setNombre(resultSet.getString("nombre"));
+            cliente.setApellido(resultSet.getString("apellido"));
+            cliente.setDni(resultSet.getString("dni"));
+            cliente.setTelefono(resultSet.getString("telefono"));
+            cliente.setEmail(resultSet.getString("email"));
+            cliente.setDireccion(resultSet.getString("direccion"));
+            cliente.setPassword(resultSet.getString("password"));
+            cliente.setEstado(resultSet.getInt("estado"));
+            cliente.setFechaRegistro(resultSet.getDate("fecha_registro").toLocalDate());
         }
-        return cliente;
+    } catch (SQLException e) {
+        System.out.println("Error en login de cliente: " + e.getMessage());
+    } finally {
+        closeResources();
     }
+    return cliente;
+}
+
 
 // Método auxiliar mejorado para mapear cliente con tipo de documento
     private clsCliente mapearClienteCompleto(ResultSet resultSet) throws SQLException {

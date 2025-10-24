@@ -214,11 +214,10 @@
                                         <label for="passwordCliente" class="form-label fw-semibold">
                                             <i class="fas fa-lock me-2 text-primary"></i>Contrase&ntilde;a
                                         </label>
-                                        <input type="password" class="form-control" id="passwordCliente" name="password" 
-                                               placeholder="Ingrese cualquier contraseña" required
-                                               value="cliente123"
+                                       <input type="password" class="form-control" id="passwordCliente" name="password"
+                                               placeholder="Ingrese su contraseña" required
                                                onkeypress="return event.key !== ' '">
-                                        <div class="form-text">Puede usar cualquier contraseña</div>
+                                         <div class="form-text">Use la contraseña registrada</div>
                                     </div>
                                     
                                     <button type="submit" class="btn btn-login mb-3" id="btnLoginCliente">
@@ -268,8 +267,8 @@
                                     <div class="border rounded p-2 bg-white text-center">
                                         <strong class="text-info">Clientes (usar DNI):</strong>
                                         <div class="mt-1">
-                                            <div><strong>44332211</strong> / cualquier contraseña</div>
-                                            <div class="user-role">Ana María Rodri</div>
+                                            <div><strong>44332211</strong> / <span class="text-muted">cliente123</span></div>
+                                            <div class="user-role">Ana María Rodríguez</div>
                                         </div>
                                     </div>
                                 </div>
