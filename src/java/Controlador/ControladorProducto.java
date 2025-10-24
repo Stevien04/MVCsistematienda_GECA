@@ -17,15 +17,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import Util.ExportUtil;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @WebServlet("/ControladorProducto")
 public class ControladorProducto extends HttpServlet {
-    
+
     private clsProductoDAO productoDAO;
     private clsCategoriaDAO categoriaDAO;
     private clsModeloDAO modeloDAO;
     private clsColorDAO colorDAO;
-    
+
     @Override
     public void init() throws ServletException {
         productoDAO = new clsProductoDAO();
@@ -33,13 +37,13 @@ public class ControladorProducto extends HttpServlet {
         modeloDAO = new clsModeloDAO();
         colorDAO = new clsColorDAO();
     }
-    
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        
+
         String accion = request.getParameter("accion");
-        
+
         try {
             switch (accion) {
                 case "listar":
@@ -66,6 +70,12 @@ public class ControladorProducto extends HttpServlet {
                 case "reactivar": // ✅ NUEVO: falta este caso
                     reactivarProducto(request, response);
                     break;
+                case "exportarExcel":
+                    exportarProductosExcel(response);
+                    break;
+                case "exportarPdf":
+                    exportarProductosPdf(response);
+                    break;
                 default:
                     listarProductos(request, response);
                     break;
@@ -74,20 +84,20 @@ public class ControladorProducto extends HttpServlet {
             throw new ServletException("Error en el controlador: " + e.getMessage(), e);
         }
     }
-    
+
     // ✅ MÉTODOS ACTUALIZADOS PARA PESTAÑAS
     private void listarProductos(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         List<clsProducto> listaProductos = productoDAO.listar();
         List<clsProducto> listaProductosInactivos = productoDAO.listarInactivos(); // Cargar ambos
-        
+
         request.setAttribute("productos", listaProductos);
         request.setAttribute("productosInactivos", listaProductosInactivos);
         request.setAttribute("mostrarInactivos", false);
         request.getRequestDispatcher("/producto/listar.jsp").forward(request, response); // ✅ Ruta absoluta
     }
-    
+
     private void listarProductosInactivos(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -104,15 +114,69 @@ public class ControladorProducto extends HttpServlet {
         request.setAttribute("mostrarInactivos", true);
         request.getRequestDispatcher("/producto/listar.jsp").forward(request, response);
     }
-    
+    private void exportarProductosExcel(HttpServletResponse response) throws IOException {
+        List<clsProducto> productos = productoDAO.listar();
+        if (productos == null) {
+            productos = new ArrayList<>();
+        }
+        List<String> cabeceras = Arrays.asList("ID", "Producto", "Categoría", "Modelo", "Color",
+                "Precio", "Stock", "Estado");
+
+        DecimalFormat formatoMoneda = new DecimalFormat("#,##0.00");
+        List<List<String>> filas = new ArrayList<>();
+        for (clsProducto producto : productos) {
+            filas.add(Arrays.asList(
+                    String.valueOf(producto.getIdproducto()),
+                    safeString(producto.getNombreproducto()),
+                    safeString(producto.getNombrecategoria()),
+                    safeString(producto.getNombremodelo()),
+                    safeString(producto.getNombrecolor()),
+                    producto.getPrecio() != null ? formatoMoneda.format(producto.getPrecio()) : "",
+                    String.valueOf(producto.getStock()),
+                    formatearEstado(producto.getEstado())));
+        }
+
+        ExportUtil.exportToExcel(response, "productos.xls", cabeceras, filas);
+    }
+
+    private void exportarProductosPdf(HttpServletResponse response) throws IOException {
+        List<clsProducto> productos = productoDAO.listar();
+        if (productos == null) {
+            productos = new ArrayList<>();
+        }
+        List<String> cabeceras = Arrays.asList("ID", "Producto", "Categoría", "Precio", "Stock", "Estado");
+
+        DecimalFormat formatoMoneda = new DecimalFormat("#,##0.00");
+        List<List<String>> filas = new ArrayList<>();
+        for (clsProducto producto : productos) {
+            filas.add(Arrays.asList(
+                    String.valueOf(producto.getIdproducto()),
+                    safeString(producto.getNombreproducto()),
+                    safeString(producto.getNombrecategoria()),
+                    producto.getPrecio() != null ? formatoMoneda.format(producto.getPrecio()) : "",
+                    String.valueOf(producto.getStock()),
+                    formatearEstado(producto.getEstado())));
+        }
+
+        ExportUtil.exportToPdf(response, "productos.pdf", "Listado de productos", cabeceras, filas);
+    }
+
+    private String safeString(String value) {
+        return value != null ? value : "";
+    }
+
+    private String formatearEstado(int estado) {
+        return estado == 1 ? "Activo" : "Inactivo";
+    }
+
     private void reactivarProducto(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
-            
+
             boolean exito = productoDAO.activar(id);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Producto reactivado correctamente");
@@ -127,27 +191,27 @@ public class ControladorProducto extends HttpServlet {
             session.setAttribute("mensaje", "Error: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorProducto?accion=listarInactivos");
     }
-    
+
     // ✅ MÉTODOS ACTUALIZADOS CON RUTAS ABSOLUTAS
     private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         List<clsCategoria> listaCategorias = categoriaDAO.listar();
         List<clsModelo> listaModelos = modeloDAO.listar();
         List<clsColor> listaColores = colorDAO.listar();
-        
+
         request.setAttribute("categorias", listaCategorias);
         request.setAttribute("modelos", listaModelos);
         request.setAttribute("colores", listaColores);
         request.getRequestDispatcher("/producto/formulario.jsp").forward(request, response); // ✅ Ruta absoluta
     }
-    
+
     private void agregarProducto(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int idCategoria = Integer.parseInt(request.getParameter("idCategoria"));
             int idModelo = Integer.parseInt(request.getParameter("idModelo"));
@@ -156,7 +220,7 @@ public class ControladorProducto extends HttpServlet {
             String descripcion = request.getParameter("descripcion");
             BigDecimal precio = new BigDecimal(request.getParameter("precio"));
             int stock = Integer.parseInt(request.getParameter("stock"));
-            
+
             clsProducto producto = new clsProducto();
             producto.setIdcategoria(idCategoria);
             producto.setIdmodelo(idModelo);
@@ -165,9 +229,9 @@ public class ControladorProducto extends HttpServlet {
             producto.setDescripcion(descripcion);
             producto.setPrecio(precio);
             producto.setStock(stock);
-            
+
             boolean exito = productoDAO.agregar(producto);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Producto agregado correctamente");
@@ -182,20 +246,20 @@ public class ControladorProducto extends HttpServlet {
             session.setAttribute("mensaje", "Error en los datos: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorProducto?accion=listar"); // ✅ Ruta absoluta
     }
-    
+
     private void mostrarEdicion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             clsProducto producto = productoDAO.listarPorId(id);
             List<clsCategoria> listaCategorias = categoriaDAO.listar();
             List<clsModelo> listaModelos = modeloDAO.listar();
             List<clsColor> listaColores = colorDAO.listar();
-            
+
             if (producto != null) {
                 request.setAttribute("producto", producto);
                 request.setAttribute("categorias", listaCategorias);
@@ -210,10 +274,10 @@ public class ControladorProducto extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ControladorProducto?accion=listar");
         }
     }
-    
+
     private void actualizarProducto(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             int idCategoria = Integer.parseInt(request.getParameter("idCategoria"));
@@ -223,7 +287,7 @@ public class ControladorProducto extends HttpServlet {
             String descripcion = request.getParameter("descripcion");
             BigDecimal precio = new BigDecimal(request.getParameter("precio"));
             int stock = Integer.parseInt(request.getParameter("stock"));
-            
+
             clsProducto producto = new clsProducto();
             producto.setIdproducto(id);
             producto.setIdcategoria(idCategoria);
@@ -233,9 +297,9 @@ public class ControladorProducto extends HttpServlet {
             producto.setDescripcion(descripcion);
             producto.setPrecio(precio);
             producto.setStock(stock);
-            
+
             boolean exito = productoDAO.actualizar(producto);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Producto actualizado correctamente");
@@ -250,17 +314,17 @@ public class ControladorProducto extends HttpServlet {
             session.setAttribute("mensaje", "Error en los datos: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorProducto?accion=listar"); // ✅ Ruta absoluta
     }
-    
+
     private void eliminarProducto(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             boolean exito = productoDAO.eliminar(id);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Producto eliminado correctamente");
@@ -275,7 +339,7 @@ public class ControladorProducto extends HttpServlet {
             session.setAttribute("mensaje", "Error: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorProducto?accion=listar"); // ✅ Ruta absoluta
     }
 

@@ -11,17 +11,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import Util.ExportUtil;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @WebServlet("/ControladorCliente")
 public class ControladorCliente extends HttpServlet {
-    
+
     private clsClienteDAO clienteDAO;
-    
+
     @Override
     public void init() throws ServletException {
         clienteDAO = new clsClienteDAO();
     }
-    
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
@@ -65,6 +68,12 @@ public class ControladorCliente extends HttpServlet {
                 case "buscarPorDni":
                     buscarPorDni(request, response);
                     break;
+                case "exportarExcel":
+                    exportarClientesExcel(response);
+                    break;
+                case "exportarPdf":
+                    exportarClientesPdf(response);
+                    break;
                 default:
                     response.sendRedirect(request.getContextPath() + "/ControladorCliente?accion=listar");
                     break;
@@ -77,13 +86,13 @@ public class ControladorCliente extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ControladorCliente?accion=listar");
         }
     }
-    
+
     private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         request.getRequestDispatcher("/cliente/formulario.jsp").forward(request, response); // ✅ Ruta absoluta
     }
-    
+
     private void reactivarCliente(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -115,7 +124,7 @@ public class ControladorCliente extends HttpServlet {
         // ✅ REDIRIGIR A LA LISTA DE INACTIVOS
         response.sendRedirect(request.getContextPath() + "/ControladorCliente?accion=listarInactivos");
     }
-    
+
     private void listarClientes(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -127,7 +136,7 @@ public class ControladorCliente extends HttpServlet {
         request.setAttribute("mostrarInactivos", false);
         request.getRequestDispatcher("/cliente/listar.jsp").forward(request, response); // ✅ Usar ruta absoluta
     }
-    
+
     private void listarClientesInactivos(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -139,17 +148,17 @@ public class ControladorCliente extends HttpServlet {
         request.setAttribute("mostrarInactivos", true);
         request.getRequestDispatcher("/cliente/listar.jsp").forward(request, response); // ✅ Usar ruta absoluta
     }
-    
+
     private void agregarCliente(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         String nombre = request.getParameter("nombre");
         String apellido = request.getParameter("apellido");
         String dni = request.getParameter("dni");
         String telefono = request.getParameter("telefono");
         String email = request.getParameter("email");
         String direccion = request.getParameter("direccion");
-        
+
         clsCliente cliente = new clsCliente();
         cliente.setNombre(nombre);
         cliente.setApellido(apellido);
@@ -158,9 +167,9 @@ public class ControladorCliente extends HttpServlet {
         cliente.setEmail(email);
         cliente.setDireccion(direccion);
         cliente.setFechaRegistro(LocalDate.now());
-        
+
         boolean exito = clienteDAO.agregar(cliente);
-        
+
         HttpSession session = request.getSession();
         if (exito) {
             session.setAttribute("mensaje", "Cliente agregado correctamente");
@@ -169,10 +178,10 @@ public class ControladorCliente extends HttpServlet {
             session.setAttribute("mensaje", "Error al agregar cliente");
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorCliente?accion=listar");
     }
-    
+
     private void mostrarEdicion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -187,10 +196,9 @@ public class ControladorCliente extends HttpServlet {
         }
     }
 
-    
     private void actualizarCliente(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         int id = Integer.parseInt(request.getParameter("id"));
         String nombre = request.getParameter("nombre");
         String apellido = request.getParameter("apellido");
@@ -198,7 +206,7 @@ public class ControladorCliente extends HttpServlet {
         String telefono = request.getParameter("telefono");
         String email = request.getParameter("email");
         String direccion = request.getParameter("direccion");
-        
+
         clsCliente cliente = new clsCliente();
         cliente.setIdcliente(id);
         cliente.setNombre(nombre);
@@ -207,9 +215,9 @@ public class ControladorCliente extends HttpServlet {
         cliente.setTelefono(telefono);
         cliente.setEmail(email);
         cliente.setDireccion(direccion);
-        
+
         boolean exito = clienteDAO.actualizar(cliente);
-        
+
         HttpSession session = request.getSession();
         if (exito) {
             session.setAttribute("mensaje", "Cliente actualizado correctamente");
@@ -218,16 +226,16 @@ public class ControladorCliente extends HttpServlet {
             session.setAttribute("mensaje", "Error al actualizar cliente");
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorCliente?accion=listar");
     }
-    
+
     private void eliminarCliente(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         int id = Integer.parseInt(request.getParameter("id"));
         boolean exito = clienteDAO.eliminar(id);
-        
+
         HttpSession session = request.getSession();
         if (exito) {
             session.setAttribute("mensaje", "Cliente eliminado correctamente");
@@ -236,10 +244,10 @@ public class ControladorCliente extends HttpServlet {
             session.setAttribute("mensaje", "Error al eliminar cliente");
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorCliente?accion=listar");
     }
-    
+
     private void buscarPorDni(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -262,6 +270,73 @@ public class ControladorCliente extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ControladorCliente?accion=listar");
         }
     }
+    
+     private void exportarClientesExcel(HttpServletResponse response) throws IOException {
+        List<clsCliente> clientes = clienteDAO.listar();
+        if (clientes == null) {
+            clientes = new ArrayList<>();
+        }
+        List<String> cabeceras = Arrays.asList("ID", "Nombre", "Documento", "Teléfono",
+                "Email", "Dirección", "Registro", "Estado");
+
+        List<List<String>> filas = new ArrayList<>();
+        for (clsCliente cliente : clientes) {
+            filas.add(Arrays.asList(
+                    String.valueOf(cliente.getIdcliente()),
+                    safeString(cliente.getNombreCompleto()),
+                    safeString(cliente.getDocumentoCompleto()),
+                    safeString(cliente.getTelefono()),
+                    safeString(cliente.getEmail()),
+                    safeString(cliente.getDireccion()),
+                    cliente.getFechaRegistro() != null ? cliente.getFechaRegistro().toString() : "",
+                    formatearEstado(cliente.getEstado())));
+        }
+
+        ExportUtil.exportToExcel(response, "clientes.xls", cabeceras, filas);
+    }
+
+    private void exportarClientesPdf(HttpServletResponse response) throws IOException {
+        List<clsCliente> clientes = clienteDAO.listar();
+        if (clientes == null) {
+            clientes = new ArrayList<>();
+        }
+        List<String> cabeceras = Arrays.asList("ID", "Nombre", "Documento", "Contacto", "Estado");
+
+        List<List<String>> filas = new ArrayList<>();
+        for (clsCliente cliente : clientes) {
+            String contacto = concatNonEmpty(safeString(cliente.getTelefono()), safeString(cliente.getEmail()));
+            filas.add(Arrays.asList(
+                    String.valueOf(cliente.getIdcliente()),
+                    safeString(cliente.getNombreCompleto()),
+                    safeString(cliente.getDocumentoCompleto()),
+                    contacto,
+                    formatearEstado(cliente.getEstado())));
+        }
+
+        ExportUtil.exportToPdf(response, "clientes.pdf", "Listado de clientes", cabeceras, filas);
+    }
+
+    private String safeString(String value) {
+        return value != null ? value : "";
+    }
+
+    private String concatNonEmpty(String... values) {
+        StringBuilder sb = new StringBuilder();
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                if (sb.length() > 0) {
+                    sb.append(" / ");
+                }
+                sb.append(value);
+            }
+        }
+        return sb.toString();
+    }
+
+    private String formatearEstado(int estado) {
+        return estado == 1 ? "Activo" : "Inactivo";
+    }
+
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

@@ -17,30 +17,34 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import Util.ExportUtil;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @WebServlet("/ControladorEmpleado")
 public class ControladorEmpleado extends HttpServlet {
-    
+
     private clsEmpleadoDAO empleadoDAO;
     private clsCargoDAO cargoDAO;
-    
+
     @Override
     public void init() throws ServletException {
         empleadoDAO = new clsEmpleadoDAO();
         cargoDAO = new clsCargoDAO();
     }
-    
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        
+
         String accion = request.getParameter("accion");
-        
+
         if (accion == null) {
             response.sendRedirect(request.getContextPath() + "/login.jsp");
             return;
         }
-        
+
         try {
             switch (accion) {
                 case "login":
@@ -88,6 +92,12 @@ public class ControladorEmpleado extends HttpServlet {
                 case "reactivar":
                     reactivarEmpleado(request, response);
                     break;
+                case "exportarExcel":
+                    exportarEmpleadosExcel(response);
+                    break;
+                case "exportarPdf":
+                    exportarEmpleadosPdf(response);
+                    break;
                 default:
                     response.sendRedirect(request.getContextPath() + "/dashboard.jsp");
                     break;
@@ -100,7 +110,7 @@ public class ControladorEmpleado extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=listar");
         }
     }
-    
+
     // Nuevos métodos:
     private void listarEmpleadosInactivos(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -141,6 +151,76 @@ public class ControladorEmpleado extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=listarInactivos");
     }
     
+     private void exportarEmpleadosExcel(HttpServletResponse response) throws IOException {
+        List<clsEmpleado> empleados = empleadoDAO.listar();
+        if (empleados == null) {
+            empleados = new ArrayList<>();
+        }
+        List<String> cabeceras = Arrays.asList("ID", "Empleado", "DNI", "Teléfono", "Email",
+                "Cargo", "Salario", "Estado");
+
+        DecimalFormat formatoMoneda = new DecimalFormat("#,##0.00");
+        List<List<String>> filas = new ArrayList<>();
+        for (clsEmpleado empleado : empleados) {
+            filas.add(Arrays.asList(
+                    String.valueOf(empleado.getIdempleado()),
+                    safeString(empleado.getNombreCompleto()),
+                    safeString(empleado.getDni()),
+                    safeString(empleado.getTelefono()),
+                    safeString(empleado.getEmail()),
+                    safeString(empleado.getNombrecargo()),
+                    empleado.getSalario() != null ? formatoMoneda.format(empleado.getSalario()) : "",
+                    formatearEstado(empleado.getEstado())));
+        }
+
+        ExportUtil.exportToExcel(response, "empleados.xls", cabeceras, filas);
+    }
+
+    private void exportarEmpleadosPdf(HttpServletResponse response) throws IOException {
+        List<clsEmpleado> empleados = empleadoDAO.listar();
+        if (empleados == null) {
+            empleados = new ArrayList<>();
+        }
+        List<String> cabeceras = Arrays.asList("ID", "Empleado", "Documento", "Contacto", "Cargo", "Salario", "Estado");
+
+        DecimalFormat formatoMoneda = new DecimalFormat("#,##0.00");
+        List<List<String>> filas = new ArrayList<>();
+        for (clsEmpleado empleado : empleados) {
+            String contacto = concatNonEmpty(safeString(empleado.getTelefono()), safeString(empleado.getEmail()));
+            filas.add(Arrays.asList(
+                    String.valueOf(empleado.getIdempleado()),
+                    safeString(empleado.getNombreCompleto()),
+                    safeString(empleado.getDni()),
+                    contacto,
+                    safeString(empleado.getNombrecargo()),
+                    empleado.getSalario() != null ? formatoMoneda.format(empleado.getSalario()) : "",
+                    formatearEstado(empleado.getEstado())));
+        }
+
+        ExportUtil.exportToPdf(response, "empleados.pdf", "Listado de empleados", cabeceras, filas);
+    }
+
+    private String safeString(String value) {
+        return value != null ? value : "";
+    }
+
+    private String concatNonEmpty(String... values) {
+        StringBuilder sb = new StringBuilder();
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                if (sb.length() > 0) {
+                    sb.append(" / ");
+                }
+                sb.append(value);
+            }
+        }
+        return sb.toString();
+    }
+
+    private String formatearEstado(int estado) {
+        return estado == 1 ? "Activo" : "Inactivo";
+    }
+
     private void login(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -206,10 +286,10 @@ public class ControladorEmpleado extends HttpServlet {
             }
         }
     }
-    
+
     private void logout(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         HttpSession session = request.getSession();
         if (session != null) {
             clsEmpleado empleado = (clsEmpleado) session.getAttribute("empleado");
@@ -220,7 +300,7 @@ public class ControladorEmpleado extends HttpServlet {
         }
         response.sendRedirect(request.getContextPath() + "/login.jsp");
     }
-    
+
     private void listarEmpleados(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -233,18 +313,18 @@ public class ControladorEmpleado extends HttpServlet {
 
         request.getRequestDispatcher("/empleado/listar.jsp").forward(request, response);
     }
-    
+
     private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         List<clsCargo> listaCargos = cargoDAO.listar();
         request.setAttribute("cargos", listaCargos);
         request.getRequestDispatcher("/empleado/formulario.jsp").forward(request, response);
     }
-    
+
     private void agregarEmpleado(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             // Validar campos obligatorios
             String nombre = request.getParameter("nombre");
@@ -253,19 +333,19 @@ public class ControladorEmpleado extends HttpServlet {
             String usuario = request.getParameter("usuario");
             String password = request.getParameter("password");
             String idCargoStr = request.getParameter("idCargo");
-            
-            if (nombre == null || nombre.trim().isEmpty() ||
-                apellido == null || apellido.trim().isEmpty() ||
-                dni == null || dni.trim().isEmpty() ||
-                usuario == null || usuario.trim().isEmpty() ||
-                password == null || password.trim().isEmpty() ||
-                idCargoStr == null || idCargoStr.trim().isEmpty()) {
-                
+
+            if (nombre == null || nombre.trim().isEmpty()
+                    || apellido == null || apellido.trim().isEmpty()
+                    || dni == null || dni.trim().isEmpty()
+                    || usuario == null || usuario.trim().isEmpty()
+                    || password == null || password.trim().isEmpty()
+                    || idCargoStr == null || idCargoStr.trim().isEmpty()) {
+
                 throw new Exception("Los campos nombre, apellido, DNI, usuario, password y cargo son obligatorios");
             }
-            
+
             int idCargo = Integer.parseInt(idCargoStr);
-            
+
             // Crear objeto empleado
             clsEmpleado empleado = new clsEmpleado();
             empleado.setNombre(nombre.trim());
@@ -274,23 +354,23 @@ public class ControladorEmpleado extends HttpServlet {
             empleado.setUsuario(usuario.trim());
             empleado.setPassword(password.trim());
             empleado.setIdcargo(idCargo);
-            
+
             // Campos opcionales
             String telefono = request.getParameter("telefono");
             if (telefono != null && !telefono.trim().isEmpty()) {
                 empleado.setTelefono(telefono.trim());
             }
-            
+
             String email = request.getParameter("email");
             if (email != null && !email.trim().isEmpty()) {
                 empleado.setEmail(email.trim());
             }
-            
+
             String direccion = request.getParameter("direccion");
             if (direccion != null && !direccion.trim().isEmpty()) {
                 empleado.setDireccion(direccion.trim());
             }
-            
+
             String fechaContratoStr = request.getParameter("fechaContrato");
             if (fechaContratoStr != null && !fechaContratoStr.trim().isEmpty()) {
                 try {
@@ -302,7 +382,7 @@ public class ControladorEmpleado extends HttpServlet {
             } else {
                 empleado.setFechaContrato(LocalDate.now());
             }
-            
+
             String salarioStr = request.getParameter("salario");
             if (salarioStr != null && !salarioStr.trim().isEmpty()) {
                 try {
@@ -314,18 +394,18 @@ public class ControladorEmpleado extends HttpServlet {
             } else {
                 empleado.setSalario(BigDecimal.ZERO);
             }
-            
+
             // Verificar si el usuario o DNI ya existen
             if (existeUsuario(usuario.trim())) {
                 throw new Exception("El usuario ya existe en el sistema");
             }
-            
+
             if (existeDni(dni.trim())) {
                 throw new Exception("El DNI ya está registrado en el sistema");
             }
-            
+
             boolean exito = empleadoDAO.agregar(empleado);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Empleado agregado correctamente");
@@ -344,18 +424,18 @@ public class ControladorEmpleado extends HttpServlet {
             session.setAttribute("mensaje", "Error: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=listar");
     }
-    
+
     private void mostrarEdicion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             clsEmpleado empleado = empleadoDAO.listarPorId(id);
             List<clsCargo> listaCargos = cargoDAO.listar();
-            
+
             if (empleado != null) {
                 request.setAttribute("empleado", empleado);
                 request.setAttribute("cargos", listaCargos);
@@ -371,10 +451,10 @@ public class ControladorEmpleado extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=listar");
         }
     }
-    
+
     private void actualizarEmpleado(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             String nombre = request.getParameter("nombre");
@@ -388,16 +468,16 @@ public class ControladorEmpleado extends HttpServlet {
             int idCargo = Integer.parseInt(request.getParameter("idCargo"));
             String usuario = request.getParameter("usuario");
             String password = request.getParameter("password");
-            
+
             // Validar campos obligatorios
-            if (nombre == null || nombre.trim().isEmpty() ||
-                apellido == null || apellido.trim().isEmpty() ||
-                dni == null || dni.trim().isEmpty() ||
-                usuario == null || usuario.trim().isEmpty()) {
-                
+            if (nombre == null || nombre.trim().isEmpty()
+                    || apellido == null || apellido.trim().isEmpty()
+                    || dni == null || dni.trim().isEmpty()
+                    || usuario == null || usuario.trim().isEmpty()) {
+
                 throw new Exception("Los campos nombre, apellido, DNI, usuario y cargo son obligatorios");
             }
-            
+
             clsEmpleado empleado = new clsEmpleado();
             empleado.setIdempleado(id);
             empleado.setNombre(nombre.trim());
@@ -408,7 +488,7 @@ public class ControladorEmpleado extends HttpServlet {
             empleado.setDireccion(direccion != null ? direccion.trim() : null);
             empleado.setIdcargo(idCargo);
             empleado.setUsuario(usuario.trim());
-            
+
             // Procesar fecha de contrato
             if (fechaContratoStr != null && !fechaContratoStr.trim().isEmpty()) {
                 try {
@@ -418,7 +498,7 @@ public class ControladorEmpleado extends HttpServlet {
                     throw new Exception("Formato de fecha inválido. Use YYYY-MM-DD");
                 }
             }
-            
+
             // Procesar salario
             if (salarioStr != null && !salarioStr.trim().isEmpty()) {
                 try {
@@ -428,7 +508,7 @@ public class ControladorEmpleado extends HttpServlet {
                     throw new Exception("Formato de salario inválido");
                 }
             }
-            
+
             // Solo actualizar password si se proporcionó uno nuevo
             if (password != null && !password.trim().isEmpty()) {
                 empleado.setPassword(password.trim());
@@ -439,19 +519,19 @@ public class ControladorEmpleado extends HttpServlet {
                     empleado.setPassword(empleadoActual.getPassword());
                 }
             }
-            
+
             // Verificar si el usuario ya existe (excluyendo el actual)
             if (existeUsuario(usuario.trim(), id)) {
                 throw new Exception("El usuario ya existe en el sistema");
             }
-            
+
             // Verificar si el DNI ya existe (excluyendo el actual)
             if (existeDni(dni.trim(), id)) {
                 throw new Exception("El DNI ya está registrado en el sistema");
             }
-            
+
             boolean exito = empleadoDAO.actualizar(empleado);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Empleado actualizado correctamente");
@@ -466,26 +546,26 @@ public class ControladorEmpleado extends HttpServlet {
             session.setAttribute("mensaje", "Error en los datos: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=listar");
     }
-    
+
     private void eliminarEmpleado(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
-            
+
             // Verificar si el empleado a eliminar es el mismo que está logueado
             HttpSession session = request.getSession();
             clsEmpleado empleadoLogueado = (clsEmpleado) session.getAttribute("empleado");
-            
+
             if (empleadoLogueado != null && empleadoLogueado.getIdempleado() == id) {
                 session.setAttribute("mensaje", "No puede eliminar su propio usuario");
                 session.setAttribute("tipoMensaje", "error");
             } else {
                 boolean exito = empleadoDAO.eliminar(id);
-                
+
                 if (exito) {
                     session.setAttribute("mensaje", "Empleado eliminado correctamente");
                     session.setAttribute("tipoMensaje", "success");
@@ -500,30 +580,29 @@ public class ControladorEmpleado extends HttpServlet {
             session.setAttribute("mensaje", "Error: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=listar");
     }
-    
+
     // ========== NUEVOS MÉTODOS AGREGADOS ==========
-    
     private void buscarEmpleados(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             String criterio = request.getParameter("criterio");
             String valor = request.getParameter("valor");
-            
+
             if (criterio == null || valor == null || valor.trim().isEmpty()) {
                 listarEmpleados(request, response);
                 return;
             }
-            
+
             List<clsEmpleado> listaEmpleados = buscarEmpleados(criterio, valor.trim());
             request.setAttribute("empleados", listaEmpleados);
             request.setAttribute("criterio", criterio);
             request.setAttribute("valor", valor);
             request.getRequestDispatcher("/empleado/listar.jsp").forward(request, response);
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             HttpSession session = request.getSession();
@@ -532,16 +611,16 @@ public class ControladorEmpleado extends HttpServlet {
             listarEmpleados(request, response);
         }
     }
-    
+
     private void cambiarEstadoEmpleado(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             String estado = request.getParameter("estado");
-            
+
             boolean exito = cambiarEstado(id, estado);
-            
+
             HttpSession session = request.getSession();
             if (exito) {
                 session.setAttribute("mensaje", "Estado del empleado actualizado correctamente");
@@ -556,17 +635,17 @@ public class ControladorEmpleado extends HttpServlet {
             session.setAttribute("mensaje", "Error: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=listar");
     }
-    
+
     private void mostrarPerfil(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             HttpSession session = request.getSession();
             clsEmpleado empleado = (clsEmpleado) session.getAttribute("empleado");
-            
+
             if (empleado != null) {
                 // Actualizar datos del empleado desde la base de datos
                 clsEmpleado empleadoActualizado = empleadoDAO.listarPorId(empleado.getIdempleado());
@@ -583,19 +662,19 @@ public class ControladorEmpleado extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/dashboard.jsp");
         }
     }
-    
+
     private void actualizarPerfil(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             HttpSession session = request.getSession();
             clsEmpleado empleadoLogueado = (clsEmpleado) session.getAttribute("empleado");
-            
+
             if (empleadoLogueado == null) {
                 response.sendRedirect(request.getContextPath() + "/login.jsp");
                 return;
             }
-            
+
             int id = empleadoLogueado.getIdempleado();
             String nombre = request.getParameter("nombre");
             String apellido = request.getParameter("apellido");
@@ -604,14 +683,14 @@ public class ControladorEmpleado extends HttpServlet {
             String direccion = request.getParameter("direccion");
             String passwordActual = request.getParameter("passwordActual");
             String passwordNuevo = request.getParameter("passwordNuevo");
-            
+
             // Validar campos obligatorios
-            if (nombre == null || nombre.trim().isEmpty() ||
-                apellido == null || apellido.trim().isEmpty()) {
-                
+            if (nombre == null || nombre.trim().isEmpty()
+                    || apellido == null || apellido.trim().isEmpty()) {
+
                 throw new Exception("Los campos nombre y apellido son obligatorios");
             }
-            
+
             clsEmpleado empleado = new clsEmpleado();
             empleado.setIdempleado(id);
             empleado.setNombre(nombre.trim());
@@ -619,29 +698,29 @@ public class ControladorEmpleado extends HttpServlet {
             empleado.setTelefono(telefono != null ? telefono.trim() : null);
             empleado.setEmail(email != null ? email.trim() : null);
             empleado.setDireccion(direccion != null ? direccion.trim() : null);
-            
+
             // Verificar y actualizar contraseña si se proporciona
             if (passwordNuevo != null && !passwordNuevo.trim().isEmpty()) {
                 if (passwordActual == null || passwordActual.trim().isEmpty()) {
                     throw new Exception("Debe ingresar la contraseña actual para cambiarla");
                 }
-                
+
                 // Verificar contraseña actual
                 clsEmpleado empleadoActual = empleadoDAO.validarLogin(
-                    empleadoLogueado.getUsuario(), passwordActual.trim());
-                
+                        empleadoLogueado.getUsuario(), passwordActual.trim());
+
                 if (empleadoActual == null) {
                     throw new Exception("La contraseña actual es incorrecta");
                 }
-                
+
                 empleado.setPassword(passwordNuevo.trim());
             } else {
                 // Mantener la contraseña actual
                 empleado.setPassword(empleadoLogueado.getPassword());
             }
-            
+
             boolean exito = empleadoDAO.actualizar(empleado);
-            
+
             if (exito) {
                 // Actualizar datos en sesión
                 clsEmpleado empleadoActualizado = empleadoDAO.listarPorId(id);
@@ -658,17 +737,17 @@ public class ControladorEmpleado extends HttpServlet {
             session.setAttribute("mensaje", "Error: " + e.getMessage());
             session.setAttribute("tipoMensaje", "error");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=perfil");
     }
-    
+
     private void verDetalleEmpleado(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             clsEmpleado empleado = empleadoDAO.listarPorId(id);
-            
+
             if (empleado != null) {
                 request.setAttribute("empleado", empleado);
                 request.getRequestDispatcher("/empleado/detalle.jsp").forward(request, response);
@@ -683,37 +762,36 @@ public class ControladorEmpleado extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ControladorEmpleado?accion=listar");
         }
     }
-    
+
     // ========== MÉTODOS AUXILIARES ==========
-    
     private boolean existeUsuario(String usuario) {
         clsEmpleado empleado = empleadoDAO.listarPorUsuario(usuario);
         return empleado != null;
     }
-    
+
     private boolean existeUsuario(String usuario, int idExcluir) {
         clsEmpleado empleado = empleadoDAO.listarPorUsuario(usuario);
         return empleado != null && empleado.getIdempleado() != idExcluir;
     }
-    
+
     private boolean existeDni(String dni) {
         // Implementar lógica para verificar DNI
         // Por ahora, asumimos que no existe
         return false;
     }
-    
+
     private boolean existeDni(String dni, int idExcluir) {
         // Implementar lógica para verificar DNI excluyendo un ID
         // Por ahora, asumimos que no existe
         return false;
     }
-    
+
     private List<clsEmpleado> buscarEmpleados(String criterio, String valor) {
         // Implementar lógica de búsqueda
         // Por ahora, retornamos todos los empleados
         return empleadoDAO.listar();
     }
-    
+
     private boolean cambiarEstado(int id, String estado) {
         // Implementar lógica para cambiar estado
         // Por ahora, asumimos éxito
