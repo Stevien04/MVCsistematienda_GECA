@@ -19,6 +19,33 @@
 CREATE DATABASE IF NOT EXISTS `bdsistienda_geca` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
 USE `bdsistienda_geca`;
 
+-- Volcando estructura para tabla bdsistienda_geca.tbboleta
+CREATE TABLE IF NOT EXISTS `tbboleta` (
+  `idboleta` int(11) NOT NULL AUTO_INCREMENT,
+  `numero_boleta` varchar(15) NOT NULL,
+  `fecha_emision` date NOT NULL DEFAULT curdate(),
+  `hora_emision` time NOT NULL DEFAULT curtime(),
+  `subtotal` decimal(10,2) NOT NULL,
+  `igv` decimal(10,2) NOT NULL,
+  `total` decimal(10,2) NOT NULL,
+  `estado_boleta` varchar(20) NOT NULL DEFAULT 'ACTIVA',
+  `idcliente` int(11) NOT NULL,
+  `idempleado` int(11) NOT NULL,
+  `estado` int(11) NOT NULL DEFAULT 1,
+  `fecha_creacion` datetime DEFAULT current_timestamp(),
+  `fecha_actualizacion` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`idboleta`),
+  UNIQUE KEY `numero_boleta` (`numero_boleta`),
+  KEY `fk_boleta_cliente` (`idcliente`),
+  KEY `fk_boleta_empleado` (`idempleado`),
+  CONSTRAINT `fk_boleta_cliente` FOREIGN KEY (`idcliente`) REFERENCES `tbcliente` (`idcliente`),
+  CONSTRAINT `fk_boleta_empleado` FOREIGN KEY (`idempleado`) REFERENCES `tbempleado` (`idempleado`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Volcando datos para la tabla bdsistienda_geca.tbboleta: ~1 rows (aproximadamente)
+INSERT INTO `tbboleta` (`idboleta`, `numero_boleta`, `fecha_emision`, `hora_emision`, `subtotal`, `igv`, `total`, `estado_boleta`, `idcliente`, `idempleado`, `estado`, `fecha_creacion`, `fecha_actualizacion`) VALUES
+	(1, 'BOL-000001', '2025-10-24', '15:30:00', 42.37, 7.63, 50.00, 'ACTIVA', 1, 1, 1, '2025-10-24 15:30:00', '2025-10-24 15:30:00');
+
 -- Volcando estructura para tabla bdsistienda_geca.tbcargo
 CREATE TABLE IF NOT EXISTS `tbcargo` (
   `idcargo` int(11) NOT NULL AUTO_INCREMENT,
@@ -105,6 +132,27 @@ INSERT INTO `tbcolor` (`idcolor`, `nombrecolor`, `codigo_hex`, `descripcion`, `e
 	(8, 'Verde', '#008000', 'Color verde', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57'),
 	(9, 'Amarillo', '#FFFF00', 'Color amarillo', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57'),
 	(10, 'Rosa', '#FFC0CB', 'Color rosa', 1, '2025-10-18 00:25:57', '2025-10-18 00:25:57');
+
+-- Volcando estructura para tabla bdsistienda_geca.tbdetalleboleta
+CREATE TABLE IF NOT EXISTS `tbdetalleboleta` (
+  `iddetalle` int(11) NOT NULL AUTO_INCREMENT,
+  `idboleta` int(11) NOT NULL,
+  `idproducto` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio_unitario` decimal(10,2) NOT NULL,
+  `importe` decimal(10,2) NOT NULL,
+  `estado` int(11) NOT NULL DEFAULT 1,
+  `fecha_creacion` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`iddetalle`),
+  KEY `fk_detalle_boleta` (`idboleta`),
+  KEY `fk_detalle_producto` (`idproducto`),
+  CONSTRAINT `fk_detalle_boleta` FOREIGN KEY (`idboleta`) REFERENCES `tbboleta` (`idboleta`) ON DELETE CASCADE,
+  CONSTRAINT `fk_detalle_producto` FOREIGN KEY (`idproducto`) REFERENCES `tbproducto` (`idproducto`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Volcando datos para la tabla bdsistienda_geca.tbdetalleboleta: ~1 rows (aproximadamente)
+INSERT INTO `tbdetalleboleta` (`iddetalle`, `idboleta`, `idproducto`, `cantidad`, `precio_unitario`, `importe`, `estado`, `fecha_creacion`) VALUES
+	(1, 1, 7, 1, 50.00, 50.00, 1, '2025-10-24 15:30:00');
 
 -- Volcando estructura para tabla bdsistienda_geca.tbempleado
 CREATE TABLE IF NOT EXISTS `tbempleado` (
@@ -215,8 +263,8 @@ CREATE TABLE IF NOT EXISTS `tbproducto` (
 
 -- Volcando datos para la tabla bdsistienda_geca.tbproducto: ~2 rows (aproximadamente)
 INSERT INTO `tbproducto` (`idproducto`, `idcategoria`, `idmodelo`, `idcolor`, `nombreproducto`, `descripcion`, `precio`, `stock`, `fecha_creacion`, `estado`, `fecha_actualizacion`) VALUES
-	(7, 2, 13, 7, 'Stevie', '123', 50.00, 3, '2025-10-24', 1, '2025-10-24 14:45:46'),
-	(8, 5, 4, 9, 'POLO AZURE', 'BUEN NEGOCIO', 30.00, 20, '2025-10-24', 1, '2025-10-24 15:18:42');
+	(7, 2, 13, 7, 'Stevie', '123', 50.00, 1, '2025-10-24', 1, '2025-10-24 15:36:08'),
+	(8, 5, 4, 9, 'POLO AZURE', 'BUEN NEGOCIO', 30.00, 19, '2025-10-24', 1, '2025-10-24 15:30:33');
 
 -- Volcando estructura para tabla bdsistienda_geca.tbproducto_talla
 CREATE TABLE IF NOT EXISTS `tbproducto_talla` (
